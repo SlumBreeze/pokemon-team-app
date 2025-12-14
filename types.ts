@@ -43,6 +43,7 @@ export interface TeamMember {
   selectedAbility: string;
   abilityDescription?: string;
   teraType: string;
+  level: number;
   loading: boolean;
   error: string | null;
   customName: string; // The text in the input field
@@ -60,4 +61,6 @@ export interface MatchupResult {
   speedDiff: number;
   speedTier: 'faster' | 'slower' | 'tie';
   message: string;
+  mySpeed: number;
+  enemySpeed: number;
 }

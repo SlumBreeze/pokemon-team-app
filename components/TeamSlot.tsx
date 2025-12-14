@@ -14,7 +14,7 @@ interface TeamSlotProps {
 const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear }) => {
   const [inputValue, setInputValue] = useState(member.customName || '');
   
-  // Sync input value if parent updates it (e.g. initial load)
+  // Sync input value if parent updates it, but allow local typing
   useEffect(() => {
     setInputValue(member.customName);
   }, [member.customName]);
@@ -41,8 +41,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
         selectedAbility: defaultAbilityName,
         abilityDescription: desc,
         teraType: data.types[0]?.type.name || 'normal',
-        error: null
+        error: null,
+        customName: '' // Clear the saved name so the input clears
       });
+      setInputValue(''); // Clear the local input immediately
     } catch (err: any) {
       onUpdate(index, {
         loading: false,
@@ -89,8 +91,11 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={() => { if(inputValue !== member.customName) handleSearch() }}
-          placeholder="Enter Pokémon..."
+          // Only auto-search on blur if something was typed and slot is empty, otherwise it's annoying
+          onBlur={() => { 
+            if(inputValue && inputValue !== member.customName && !member.data) handleSearch() 
+          }}
+          placeholder={member.data ? "Replace Pokémon..." : "Enter Pokémon..."}
           className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors pr-8"
         />
         <div className="absolute right-2 top-2.5 text-gray-500">
@@ -120,9 +125,27 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
                 className="w-14 h-14 object-contain"
               />
             </div>
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="font-bold text-lg capitalize truncate leading-tight">{member.data.name}</div>
-              <div className="flex gap-1 flex-wrap">
+            <div className="flex flex-col gap-1 min-w-0 flex-grow">
+              <div className="font-bold text-lg capitalize truncate leading-tight flex justify-between">
+                {member.data.name}
+                <div className="flex items-center bg-dark/50 rounded px-1.5 border border-gray-700">
+                    <span className="text-[10px] text-gray-400 mr-1">Lv.</span>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="100" 
+                      value={member.level}
+                      onChange={(e) => {
+                        let val = parseInt(e.target.value) || 1;
+                        if(val > 100) val = 100;
+                        if(val < 1) val = 1;
+                        onUpdate(index, { level: val });
+                      }}
+                      className="w-8 bg-transparent text-right text-xs font-mono focus:outline-none text-white"
+                    />
+                </div>
+              </div>
+              <div className="flex gap-1 flex-wrap mt-0.5">
                 {member.data.types.map(t => (
                   <span 
                     key={t.type.name} 
@@ -133,7 +156,6 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
                   </span>
                 ))}
               </div>
-              <div className="text-xs text-gray-400">Spd: <span className="text-white font-mono">{getStat('speed')}</span></div>
             </div>
           </div>
 

@@ -2,14 +2,21 @@ import React, { useState } from 'react';
 import { TeamMember, PokemonData, MatchupResult } from '../types';
 import { fetchPokemon } from '../services/pokeApi';
 import { TYPE_COLORS, getMultiplier } from '../constants';
-import { Search, Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle } from 'lucide-react';
+import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge } from 'lucide-react';
 
 interface AnalysisSectionProps {
   team: TeamMember[];
 }
 
+// Estimate real stat using simplified Gen 3+ formula (Assuming 31 IV, 0 EV for generic comparison)
+// Stat = floor( ( (2 * Base + 31) * Level ) / 100 ) + 5
+const calculateStat = (base: number, level: number): number => {
+  return Math.floor(((2 * base + 31) * level) / 100) + 5;
+};
+
 const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
   const [enemyName, setEnemyName] = useState('');
+  const [enemyLevel, setEnemyLevel] = useState(50);
   const [enemyData, setEnemyData] = useState<PokemonData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,17 +39,21 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
 
   const calculateMatchups = (enemy: PokemonData): MatchupResult[] => {
     const enemyTypes = enemy.types.map(t => t.type.name);
-    const enemySpeed = enemy.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
+    const enemyBaseSpeed = enemy.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
+    const realEnemySpeed = calculateStat(enemyBaseSpeed, enemyLevel);
 
     return team.map(member => {
       if (!member.data) return null;
 
-      const memberSpeed = member.data.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
-      const speedDiff = memberSpeed - enemySpeed;
+      const memberBaseSpeed = member.data.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
+      const realMemberSpeed = calculateStat(memberBaseSpeed, member.level);
+      
+      const speedDiff = realMemberSpeed - realEnemySpeed;
       
       let speedTier: MatchupResult['speedTier'] = 'tie';
-      if (speedDiff > 5) speedTier = 'faster';
-      else if (speedDiff < -5) speedTier = 'slower';
+      // Speed ties in pokemon are strict, but let's give a small buffer for "tie" visually if exact match or very close
+      if (speedDiff > 0) speedTier = 'faster';
+      else if (speedDiff < 0) speedTier = 'slower';
 
       // Offensive Calculation
       // We check all the user's base types + their Tera type
@@ -76,7 +87,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
         bestMoveType,
         speedDiff,
         speedTier,
-        message
+        message,
+        mySpeed: realMemberSpeed,
+        enemySpeed: realEnemySpeed
       };
     }).filter(Boolean) as MatchupResult[];
   };
@@ -91,15 +104,30 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
       </h2>
 
       <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-grow">
+        <div className="relative flex-grow flex gap-2">
            <input 
             type="text"
             value={enemyName}
             onChange={(e) => setEnemyName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
             placeholder="Enter Opponent Name (e.g. Garchomp)..."
-            className="w-full bg-dark border border-gray-600 rounded-l px-4 py-3 text-white focus:outline-none focus:border-scarlet-500 text-lg placeholder-gray-600"
+            className="flex-grow bg-dark border border-gray-600 rounded px-4 py-3 text-white focus:outline-none focus:border-scarlet-500 text-lg placeholder-gray-600"
           />
+          <div className="w-24 bg-dark border border-gray-600 rounded flex flex-col px-2 py-1 justify-center">
+            <label className="text-[10px] text-gray-400 uppercase font-bold">Level</label>
+            <input 
+              type="number" 
+              value={enemyLevel} 
+              min="1" max="100"
+              onChange={(e) => {
+                 let val = parseInt(e.target.value) || 50;
+                 if(val > 100) val = 100;
+                 if(val < 1) val = 1;
+                 setEnemyLevel(val);
+              }}
+              className="bg-transparent text-white font-mono text-lg focus:outline-none"
+            />
+          </div>
         </div>
         <button 
           onClick={handleAnalyze}
@@ -120,16 +148,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
       {enemyData && (
         <div className="animate-fade-in">
           {/* Enemy Header */}
-          <div className="flex items-center gap-6 p-4 bg-dark rounded-lg border border-gray-700 mb-6">
-             <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-gray-600">
+          <div className="flex items-center gap-6 p-4 bg-dark rounded-lg border border-gray-700 mb-6 relative overflow-hidden">
+             {/* Background Decoration */}
+             <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-red-900/20 to-transparent pointer-events-none"></div>
+
+             <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-gray-600 z-10">
                <img 
                  src={enemyData.sprites.other?.["official-artwork"].front_default || enemyData.sprites.front_default} 
                  alt={enemyData.name} 
                  className="w-20 h-20 object-contain"
                />
              </div>
-             <div>
-                <h3 className="text-2xl font-bold capitalize text-white">{enemyData.name}</h3>
+             <div className="z-10">
+                <h3 className="text-2xl font-bold capitalize text-white flex items-center gap-2">
+                  {enemyData.name}
+                  <span className="text-sm bg-gray-700 px-2 py-0.5 rounded text-gray-300">Lv. {enemyLevel}</span>
+                </h3>
                 <div className="flex gap-2 mt-2">
                   {enemyData.types.map(t => (
                     <span 
@@ -141,8 +175,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                     </span>
                   ))}
                 </div>
-                <div className="mt-2 text-gray-400 font-mono text-sm">
-                  Base Speed: <span className="text-white">{enemyData.stats.find(s => s.stat.name === 'speed')?.base_stat}</span>
+                <div className="mt-2 text-gray-400 font-mono text-sm flex items-center gap-2">
+                  <Gauge size={14} />
+                  Est. Speed: <span className="text-white font-bold">{calculateStat(enemyData.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, enemyLevel)}</span>
                 </div>
              </div>
           </div>
@@ -169,15 +204,24 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
               }
 
               return (
-                <div key={idx} className={`border-l-4 ${borderColor} ${bgGlow} bg-card p-4 rounded r-0 flex flex-col gap-2 relative overflow-hidden`}>
+                <div key={idx} className={`border-l-4 ${borderColor} ${bgGlow} bg-card p-4 rounded r-0 flex flex-col gap-2 relative overflow-hidden transition-all hover:bg-[#333]`}>
                   <div className="flex justify-between items-start">
-                    <span className="font-bold capitalize text-lg">{member.data.name}</span>
-                    <div className="flex items-center gap-1 text-xs bg-dark/50 px-2 py-1 rounded">
-                      {matchup.speedTier === 'faster' && <ArrowUpCircle size={14} className="text-green-500" />}
-                      {matchup.speedTier === 'slower' && <ArrowDownCircle size={14} className="text-red-500" />}
-                      {matchup.speedTier === 'tie' && <MinusCircle size={14} className="text-yellow-500" />}
-                      <span className={matchup.speedTier === 'faster' ? 'text-green-400' : matchup.speedTier === 'slower' ? 'text-red-400' : 'text-yellow-400'}>
-                        {matchup.speedTier === 'faster' ? 'Faster' : matchup.speedTier === 'slower' ? 'Slower' : 'Speed Tie'}
+                    <div>
+                      <span className="font-bold capitalize text-lg block">{member.data.name}</span>
+                      <span className="text-xs text-gray-500">Lv. {member.level}</span>
+                    </div>
+                    
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1 text-xs bg-dark/50 px-2 py-1 rounded mb-1">
+                        {matchup.speedTier === 'faster' && <ArrowUpCircle size={14} className="text-green-500" />}
+                        {matchup.speedTier === 'slower' && <ArrowDownCircle size={14} className="text-red-500" />}
+                        {matchup.speedTier === 'tie' && <MinusCircle size={14} className="text-yellow-500" />}
+                        <span className={`font-bold ${matchup.speedTier === 'faster' ? 'text-green-400' : matchup.speedTier === 'slower' ? 'text-red-400' : 'text-yellow-400'}`}>
+                          {matchup.speedTier === 'faster' ? 'Faster' : matchup.speedTier === 'slower' ? 'Slower' : 'Speed Tie'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        {matchup.mySpeed} vs {matchup.enemySpeed}
                       </span>
                     </div>
                   </div>

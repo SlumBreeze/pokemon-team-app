@@ -9,6 +9,7 @@ const INITIAL_TEAM: TeamMember[] = Array.from({ length: 6 }, (_, i) => ({
   selectedAbility: '',
   abilityDescription: '',
   teraType: '',
+  level: 50,
   loading: false,
   error: null,
   customName: ''
@@ -31,6 +32,7 @@ const App: React.FC = () => {
         selectedAbility: '',
         abilityDescription: '',
         teraType: '',
+        level: 50,
         loading: false,
         error: null,
         customName: ''
