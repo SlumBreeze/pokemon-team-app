@@ -1,0 +1,5 @@
+{
+  "name": "Scarlet/Violet Team Analyzer",
+  "description": "Build your Pokemon team and analyze matchups against specific opponents using Gen 9 mechanics.",
+  "requestFramePermissions": []
+}
