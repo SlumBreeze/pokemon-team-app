@@ -84,7 +84,7 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
   
   const data = await response.json();
 
-  // Process Moves: Filter for level-up moves only to keep it relevant for campaigns
+  // Process Moves: Include level-up AND machine (TMs) for catching utility
   const moves: MoveInfo[] = data.moves
     .map((m: any) => {
       // Find version group details (preferring SV/Gen9, but fallback to latest available)
@@ -96,8 +96,13 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
         learn_method: detail.move_learn_method.name
       };
     })
-    .filter((m: MoveInfo) => m.learn_method === 'level-up')
-    .sort((a: MoveInfo, b: MoveInfo) => b.level_learned_at - a.level_learned_at); // Recent moves first
+    .filter((m: MoveInfo) => m.learn_method === 'level-up' || m.learn_method === 'machine')
+    .sort((a: MoveInfo, b: MoveInfo) => {
+        // Sort level up moves first, then by level
+        if (a.learn_method === 'level-up' && b.learn_method !== 'level-up') return -1;
+        if (a.learn_method !== 'level-up' && b.learn_method === 'level-up') return 1;
+        return b.level_learned_at - a.level_learned_at;
+    });
 
   return {
     ...data,

@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { TeamMember, PokemonData, MatchupResult, Boss } from '../types';
-import { fetchPokemon, getPokemonNames } from '../services/pokeApi'; // Import getPokemonNames
+import React, { useState, useMemo } from 'react';
+import { TeamMember, PokemonData, MatchupResult } from '../types';
+import { fetchPokemon, getPokemonNames } from '../services/pokeApi';
 import { TYPE_COLORS, TYPE_NAMES, getMultiplier } from '../constants';
 import { BOSSES } from '../bosses';
-import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge, Skull, Zap, Map } from 'lucide-react';
+import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge, Skull, Zap, Map, CircleDot, Crown } from 'lucide-react';
 import MoveRecommender from './MoveRecommender';
 import AutocompleteInput from './AutocompleteInput';
 
 interface AnalysisSectionProps {
   team: TeamMember[];
 }
+
+// Special moves for catching
+const CATCHING_MOVES = {
+  SWIPE: ['false-swipe', 'hold-back'],
+  SLEEP: ['spore', 'sleep-powder', 'hypnosis', 'yawn', 'sing', 'lovely-kiss', 'dark-void', 'grass-whistle'],
+  PARALYZE: ['thunder-wave', 'glare', 'stun-spore', 'nuzzle'],
+};
 
 const calculateStat = (base: number, level: number, isCompetitive: boolean): number => {
   if (isCompetitive) {
@@ -28,17 +35,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Trigger analysis when enemyName changes if it was a selection (handled by caller logic usually, but here we can listen)
-  // Actually, handleAnalyze should be called manually or via submit
-  
   const handleAnalyze = async (overrideName?: string | React.MouseEvent) => {
-    // If overrideName is a string (passed from Autocomplete), use it. 
-    // If it's a mouse event (button click) or undefined, use state.
     const nameToSearch = typeof overrideName === 'string' ? overrideName : enemyName;
 
     if (!nameToSearch.trim()) return;
-
-    // Sync state if it was an override
     if (typeof overrideName === 'string') setEnemyName(overrideName);
 
     setLoading(true);
@@ -61,14 +61,12 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
     setEnemyName(boss.ace);
     setEnemyLevel(boss.level);
     setEnemyTera(boss.tera);
-    
-    // Auto-fetch boss
     fetchBossData(boss.ace);
   };
 
   const fetchBossData = async (name: string) => {
     setLoading(true);
-    setEnemyData(null); // Clear previous
+    setEnemyData(null);
     try {
         const data = await fetchPokemon(name);
         setEnemyData(data);
@@ -79,21 +77,78 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
     }
   };
 
-  const calculateMatchups = (enemy: PokemonData): MatchupResult[] => {
-    // If it's a boss with a known Tera, we assume they have Terastallized for defensive calc.
-    const enemyDefensiveTypes = enemyTera ? [enemyTera] : enemy.types.map(t => t.type.name);
+  // Logic extracted to useMemo below to prevent re-renders
+  const analysisData = useMemo(() => {
+    if (!enemyData) return { matchups: [], bestCounterId: null, bestCatcherId: null };
+
+    const calculateCatchScore = (member: TeamMember, enemy: PokemonData): { score: number, moves: string[] } => {
+        if (!member.data) return { score: 0, moves: [] };
     
-    // For Offensive calc (Enemy attacking us), we usually check their base types.
-    // However, if they are Tera'd, they might have Tera Blast.
-    // For simplicity in this tool, we assume the enemy attacks with their base types + tera type.
+        let score = 0;
+        const helpfulMoves: string[] = [];
+        
+        const memberMoves = member.data.moves.map(m => m.name);
+        
+        // 1. False Swipe Utility
+        const hasSwipe = memberMoves.some(m => CATCHING_MOVES.SWIPE.includes(m));
+        const enemyIsGhost = enemy.types.some(t => t.type.name === 'ghost') || enemyTera === 'ghost';
+        
+        if (hasSwipe) {
+            if (!enemyIsGhost) {
+                score += 50;
+                helpfulMoves.push('False Swipe');
+            } else {
+                // It has the move but it won't work
+                score += 0; 
+            }
+        }
+    
+        // 2. Status Utility
+        const hasSleep = memberMoves.some(m => CATCHING_MOVES.SLEEP.includes(m));
+        const enemyIsGrass = enemy.types.some(t => t.type.name === 'grass') || enemyTera === 'grass'; // Immunity to powders
+        
+        if (hasSleep) {
+            if(enemyIsGrass && memberMoves.includes('spore')) {
+                // Spore fails on grass
+            } else {
+                score += 40;
+                helpfulMoves.push('Sleep Move');
+            }
+        } else {
+            const hasParalyze = memberMoves.some(m => CATCHING_MOVES.PARALYZE.includes(m));
+            const enemyIsElectric = enemy.types.some(t => t.type.name === 'electric') || enemyTera === 'electric';
+            const enemyIsGround = enemy.types.some(t => t.type.name === 'ground') || enemyTera === 'ground';
+            
+            if (hasParalyze) {
+                if (enemyIsElectric) {
+                   // Fails
+                } else if (enemyIsGround && memberMoves.includes('thunder-wave')) {
+                   // Fails
+                } else {
+                   score += 25;
+                   helpfulMoves.push('Paralyze Move');
+                }
+            }
+        }
+        
+        return { score, moves: helpfulMoves };
+    };
+
+    const enemyDefensiveTypes = enemyTera ? [enemyTera] : enemyData.types.map(t => t.type.name);
+    
     const enemyAttackTypes = new Set<string>();
-    enemy.types.forEach(t => enemyAttackTypes.add(t.type.name));
+    enemyData.types.forEach(t => enemyAttackTypes.add(t.type.name));
     if (enemyTera) enemyAttackTypes.add(enemyTera);
 
-    const enemyBaseSpeed = enemy.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
+    const enemyBaseSpeed = enemyData.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
     const realEnemySpeed = calculateStat(enemyBaseSpeed, enemyLevel, isCompetitive);
 
-    return team.map(member => {
+    let highestOffense = -1;
+    let highestCatchScore = -1;
+    let bestOffId = null;
+    let bestCatchId = null;
+
+    const results = team.map(member => {
       if (!member.data) return null;
 
       // Speed Calc
@@ -105,7 +160,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
       if (speedDiff > 0) speedTier = 'faster';
       else if (speedDiff < 0) speedTier = 'slower';
 
-      // --- Offensive Calculation (Me vs Enemy Defense) ---
+      // --- Offensive Calculation ---
       const attackTypes = new Set<string>();
       member.data.types.forEach(t => attackTypes.add(t.type.name));
       if (member.teraType) attackTypes.add(member.teraType);
@@ -115,36 +170,49 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
 
       attackTypes.forEach(atkType => {
         let mult = getMultiplier(atkType, enemyDefensiveTypes[0]);
-        if (enemyDefensiveTypes[1]) {
-          mult *= getMultiplier(atkType, enemyDefensiveTypes[1]);
-        }
-        
+        if (enemyDefensiveTypes[1]) mult *= getMultiplier(atkType, enemyDefensiveTypes[1]);
         if (mult > maxMultiplier) {
           maxMultiplier = mult;
           bestMoveType = atkType;
         }
       });
 
-      let message = "Neutral Matchup";
-      if (maxMultiplier >= 4) message = "Huge Damage (4x)";
-      else if (maxMultiplier >= 2) message = "Super Effective (2x)";
-      else if (maxMultiplier < 1) message = "Not Effective";
-
-      // --- Defensive Calculation (Enemy vs Me) ---
+      // --- Defensive Calculation ---
       const isTeraDefensivelyActive = member.teraType && member.teraType !== member.data.types[0].type.name;
       const myDefensiveTypes = isTeraDefensivelyActive 
         ? [member.teraType]
         : member.data.types.map(t => t.type.name);
 
       let maxIncomingDamage = 0;
-
       enemyAttackTypes.forEach(enemyType => {
         let mult = getMultiplier(enemyType, myDefensiveTypes[0]);
-        if (myDefensiveTypes[1]) {
-          mult *= getMultiplier(enemyType, myDefensiveTypes[1]);
-        }
+        if (myDefensiveTypes[1]) mult *= getMultiplier(enemyType, myDefensiveTypes[1]);
         if (mult > maxIncomingDamage) maxIncomingDamage = mult;
       });
+
+      // --- Catch Calculation ---
+      const catchInfo = calculateCatchScore(member, enemyData);
+      // Penalize catch score if we die easily
+      if (maxIncomingDamage >= 2) catchInfo.score -= 20;
+      else if (maxIncomingDamage <= 0.5) catchInfo.score += 15;
+
+      // Track Bests
+      if (maxMultiplier > highestOffense) {
+          highestOffense = maxMultiplier;
+          bestOffId = member.id;
+      } else if (maxMultiplier === highestOffense && speedDiff > 0) {
+           // Tie breaker: Speed
+      }
+
+      if (catchInfo.score > highestCatchScore) {
+          highestCatchScore = catchInfo.score;
+          bestCatchId = member.id;
+      }
+
+      let message = "Neutral Matchup";
+      if (maxMultiplier >= 4) message = "Huge Damage (4x)";
+      else if (maxMultiplier >= 2) message = "Super Effective (2x)";
+      else if (maxMultiplier < 1) message = "Not Effective";
 
       return {
         memberId: member.id,
@@ -155,12 +223,20 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
         speedTier,
         message,
         mySpeed: realMemberSpeed,
-        enemySpeed: realEnemySpeed
+        enemySpeed: realEnemySpeed,
+        catchScore: catchInfo.score,
+        catchMoves: catchInfo.moves
       };
-    }).filter(Boolean) as MatchupResult[];
-  };
+    }).filter(Boolean) as (MatchupResult & { catchScore: number, catchMoves: string[] })[];
 
-  const matchups = enemyData ? calculateMatchups(enemyData) : [];
+    return {
+        matchups: results,
+        bestCounterId: bestOffId,
+        bestCatcherId: highestCatchScore > 10 ? bestCatchId : null
+    };
+  }, [enemyData, team, enemyLevel, enemyTera, isCompetitive]);
+
+  const { matchups, bestCounterId, bestCatcherId } = analysisData;
 
   // Team Weakness Matrix Calc
   const getTeamWeaknesses = () => {
@@ -170,14 +246,13 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
         let count = 0;
         team.forEach(member => {
             if (!member.data) return;
-            // Use base types for team overview usually, as Tera is situational
             const defTypes = member.data.types.map(t => t.type.name);
             let mult = getMultiplier(type, defTypes[0]);
             if (defTypes[1]) mult *= getMultiplier(type, defTypes[1]);
             
             if (mult >= 2) count++;
         });
-        if (count >= 2) { // Show warning if 2 or more members are weak
+        if (count >= 2) { 
             weaknesses.push({ type, count });
         }
     });
@@ -325,9 +400,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
               const member = team.find(m => m.id === matchup.memberId);
               if (!member?.data) return null;
 
+              const isBestCounter = matchup.memberId === bestCounterId;
+              const isBestCatcher = matchup.memberId === bestCatcherId;
+
               let borderColor = 'border-gray-600';
               let bgGlow = '';
-              if (matchup.offensiveScore >= 4) {
+              let shadow = '';
+              
+              if (isBestCounter) {
+                  borderColor = 'border-amber-400';
+                  bgGlow = 'bg-amber-900/10';
+                  shadow = 'shadow-[0_0_15px_rgba(251,191,36,0.2)]';
+              } else if (isBestCatcher) {
+                  borderColor = 'border-blue-400';
+                  bgGlow = 'bg-blue-900/10';
+                  shadow = 'shadow-[0_0_15px_rgba(96,165,250,0.2)]';
+              } else if (matchup.offensiveScore >= 4) {
                  borderColor = 'border-green-500';
                  bgGlow = 'bg-green-900/10';
               } else if (matchup.offensiveScore >= 2) {
@@ -339,15 +427,26 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
               }
 
               return (
-                <div key={idx} className={`border-l-4 ${borderColor} ${bgGlow} bg-card p-4 rounded r-0 flex flex-col gap-2 relative overflow-hidden transition-all hover:bg-[#333]`}>
+                <div key={idx} className={`border-l-4 ${borderColor} ${bgGlow} ${shadow} bg-card p-4 rounded r-0 flex flex-col gap-2 relative overflow-hidden transition-all hover:bg-[#333]`}>
                   
+                  {isBestCounter && (
+                      <div className="absolute right-0 top-0 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-bl uppercase flex items-center gap-1 shadow-lg z-10">
+                          <Crown size={12} /> Best Counter
+                      </div>
+                  )}
+                  {isBestCatcher && (
+                      <div className={`absolute right-0 ${isBestCounter ? 'top-6' : 'top-0'} bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl uppercase flex items-center gap-1 shadow-lg z-10`}>
+                          <CircleDot size={12} /> Best Catcher
+                      </div>
+                  )}
+
                   {matchup.defensiveScore >= 2 && (
-                     <div className="absolute right-2 top-2 animate-pulse" title="Opponent has super effective moves!">
+                     <div className="absolute right-2 top-8 animate-pulse opacity-50" title="Opponent has super effective moves!">
                        <Skull size={20} className={matchup.defensiveScore >= 4 ? "text-red-500" : "text-orange-500"} />
                      </div>
                   )}
 
-                  <div className="flex justify-between items-start pr-6">
+                  <div className="flex justify-between items-start pr-6 mt-2">
                     <div>
                       <span className="font-bold capitalize text-lg block">{member.data.name}</span>
                       <span className="text-xs text-gray-500">Lv. {member.level}</span>
@@ -362,9 +461,6 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                           {matchup.speedTier === 'faster' ? 'Faster' : matchup.speedTier === 'slower' ? 'Slower' : 'Tie'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-500 font-mono">
-                        {matchup.mySpeed} vs {matchup.enemySpeed}
-                      </span>
                     </div>
                   </div>
 
@@ -390,6 +486,20 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                          targetType={matchup.bestMoveType}
                        />
                    )}
+                  
+                  {/* Catch Recommendations */}
+                  {isBestCatcher && matchup.catchMoves.length > 0 && (
+                      <div className="mt-2 bg-blue-900/20 border border-blue-800/50 p-2 rounded">
+                          <div className="text-[10px] text-blue-300 uppercase font-bold mb-1 flex items-center gap-1">
+                              <CircleDot size={10} /> Catch Strategy
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                              {matchup.catchMoves.map(m => (
+                                  <span key={m} className="text-[10px] bg-blue-800 px-1.5 py-0.5 rounded text-white capitalize">{m}</span>
+                              ))}
+                          </div>
+                      </div>
+                  )}
 
                   {matchup.defensiveScore >= 1 && (
                     <div className={`mt-3 pt-2 border-t border-white/5 text-xs flex items-center gap-2 ${matchup.defensiveScore >= 2 ? 'text-red-400' : 'text-gray-400'}`}>

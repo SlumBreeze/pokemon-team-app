@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TeamSlot from './components/TeamSlot';
 import AnalysisSection from './components/AnalysisSection';
 import { TeamMember } from './types';
@@ -18,7 +18,27 @@ const INITIAL_TEAM: TeamMember[] = Array.from({ length: 6 }, (_, i) => ({
 }));
 
 const App: React.FC = () => {
-  const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM);
+  // Initialize state function to check localStorage first
+  const [team, setTeam] = useState<TeamMember[]>(() => {
+    try {
+      const saved = localStorage.getItem('sv-team-analyzer-v1');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Failed to load team", e);
+    }
+    return INITIAL_TEAM;
+  });
+
+  // Save to localStorage whenever team changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('sv-team-analyzer-v1', JSON.stringify(team));
+    } catch (e) {
+      console.error("Failed to save team", e);
+    }
+  }, [team]);
 
   const updateMember = (index: number, updates: Partial<TeamMember>) => {
     setTeam(prev => prev.map((member, i) => 
