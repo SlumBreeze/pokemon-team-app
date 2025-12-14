@@ -21,6 +21,13 @@ export interface PokemonAbility {
   };
 }
 
+export interface MoveInfo {
+  name: string;
+  url: string;
+  level_learned_at: number;
+  learn_method: string;
+}
+
 export interface PokemonData {
   id: number;
   name: string;
@@ -35,10 +42,12 @@ export interface PokemonData {
   types: PokemonType[];
   stats: PokemonStat[];
   abilities: PokemonAbility[];
+  speciesUrl: string;
+  moves: MoveInfo[];
 }
 
 export interface TeamMember {
-  id: string; // Unique ID for React keys
+  id: string;
   data: PokemonData | null;
   selectedAbility: string;
   abilityDescription?: string;
@@ -46,7 +55,16 @@ export interface TeamMember {
   level: number;
   loading: boolean;
   error: string | null;
-  customName: string; // The text in the input field
+  customName: string;
+  evolutionDetails?: string;
+}
+
+export interface Boss {
+  label: string;
+  name: string; // The Trainer Name
+  ace: string; // The Pokemon Name
+  level: number;
+  tera: string; // TypeName
 }
 
 export type TypeName = 
@@ -56,8 +74,8 @@ export type TypeName =
 
 export interface MatchupResult {
   memberId: string;
-  offensiveScore: number; // Max multiplier
-  defensiveScore: number; // Max incoming damage multiplier
+  offensiveScore: number;
+  defensiveScore: number;
   bestMoveType: string;
   speedDiff: number;
   speedTier: 'faster' | 'slower' | 'tie';

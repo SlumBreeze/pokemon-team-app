@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { TeamMember, TypeName } from '../types';
 import { TYPE_NAMES, TYPE_COLORS } from '../constants';
-import { Search, Loader2, AlertCircle, X } from 'lucide-react';
-import { fetchPokemon, fetchAbilityDescription } from '../services/pokeApi';
+import { AlertCircle, X, Sparkles } from 'lucide-react';
+import { fetchPokemon, fetchAbilityDescription, fetchEvolutionInfo } from '../services/pokeApi';
+import AutocompleteInput from './AutocompleteInput';
 
 interface TeamSlotProps {
   index: number;
@@ -14,26 +15,31 @@ interface TeamSlotProps {
 const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear }) => {
   const [inputValue, setInputValue] = useState(member.customName || '');
   
-  // Sync input value if parent updates it, but allow local typing
   useEffect(() => {
     setInputValue(member.customName);
   }, [member.customName]);
 
   const handleSearch = async () => {
-    if (!inputValue.trim()) return;
+    // Determine the name to search: prefer local input value
+    // This fixes issues where selecting from dropdown updates state but this function reads old state
+    const nameToSearch = inputValue; 
 
-    onUpdate(index, { loading: true, error: null, customName: inputValue });
+    if (!nameToSearch.trim()) return;
+
+    onUpdate(index, { loading: true, error: null, customName: nameToSearch });
 
     try {
-      const data = await fetchPokemon(inputValue);
+      const data = await fetchPokemon(nameToSearch);
       
-      // Fetch ability description for the default (first) ability
       const defaultAbilityName = data.abilities[0]?.ability.name || '';
       let desc = '';
       if (defaultAbilityName) {
         const abilityData = data.abilities[0];
         desc = await fetchAbilityDescription(abilityData.ability.url);
       }
+
+      // Fetch Evolution Info
+      const evoInfo = await fetchEvolutionInfo(data.speciesUrl, data.name);
       
       onUpdate(index, {
         loading: false,
@@ -42,9 +48,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
         abilityDescription: desc,
         teraType: data.types[0]?.type.name || 'normal',
         error: null,
-        customName: '' // Clear the saved name so the input clears
+        customName: '',
+        evolutionDetails: evoInfo
       });
-      setInputValue(''); // Clear the local input immediately
+      setInputValue('');
     } catch (err: any) {
       onUpdate(index, {
         loading: false,
@@ -54,57 +61,31 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   const clearSlot = () => {
     setInputValue('');
     onClear(index);
   };
 
-  const getStat = (name: string) => {
-    return member.data?.stats.find(s => s.stat.name === name)?.base_stat || 0;
-  };
-
   return (
-    <div className="bg-card border border-gray-700 rounded-lg p-4 flex flex-col gap-3 relative shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <div className="bg-card border border-gray-700 rounded-lg p-4 flex flex-col gap-3 relative shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[220px]">
       <div className="flex justify-between items-center text-gray-400 text-xs font-bold uppercase tracking-wider">
         <span>Slot {index + 1}</span>
         {member.data && (
-          <button 
-            onClick={clearSlot}
-            className="text-red-400 hover:text-red-300 transition-colors"
-            title="Clear Slot"
-          >
+          <button onClick={clearSlot} className="text-red-400 hover:text-red-300 transition-colors" title="Clear Slot">
             <X size={14} />
           </button>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="relative">
-        <input 
-          type="text"
+      <div className="relative z-10"> {/* Higher Z-Index for dropdown */}
+        <AutocompleteInput 
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          // Only auto-search on blur if something was typed and slot is empty, otherwise it's annoying
-          onBlur={() => { 
-            if(inputValue && inputValue !== member.customName && !member.data) handleSearch() 
-          }}
-          placeholder={member.data ? "Replace Pokémon..." : "Enter Pokémon..."}
-          className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors pr-8"
+          onChange={setInputValue}
+          onSubmit={handleSearch}
+          placeholder={member.data ? "Replace..." : "Enter Pokémon..."}
+          isLoading={member.loading}
+          onBlur={() => { if(inputValue && inputValue !== member.customName && !member.data) handleSearch() }}
         />
-        <div className="absolute right-2 top-2.5 text-gray-500">
-          {member.loading ? (
-            <Loader2 size={16} className="animate-spin text-violet-500" />
-          ) : (
-            <Search size={16} className="cursor-pointer hover:text-white" onClick={handleSearch} />
-          )}
-        </div>
       </div>
 
       {member.error && (
@@ -114,11 +95,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
         </div>
       )}
 
-      {/* Pokemon Data Display */}
       {member.data ? (
-        <div className="flex flex-col gap-3 animate-fade-in">
+        <div className="flex flex-col gap-3 animate-fade-in flex-grow">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 flex-shrink-0 bg-dark/50 rounded-full flex items-center justify-center border border-gray-700">
+            <div className="w-16 h-16 flex-shrink-0 bg-dark/50 rounded-full flex items-center justify-center border border-gray-700 relative">
               <img 
                 src={member.data.sprites.other?.["official-artwork"].front_default || member.data.sprites.front_default} 
                 alt={member.data.name} 
@@ -158,9 +138,16 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
               </div>
             </div>
           </div>
+          
+          {/* Evolution Hint */}
+          {member.evolutionDetails && member.evolutionDetails !== "Fully Evolved" && (
+            <div className="text-[10px] text-yellow-500 bg-yellow-900/10 border border-yellow-800/30 rounded px-2 py-1 flex items-center gap-1">
+                <Sparkles size={10} />
+                <span className="capitalize">{member.evolutionDetails}</span>
+            </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-2 mt-1 items-start">
-            {/* Ability Select */}
+          <div className="grid grid-cols-2 gap-2 mt-auto items-start">
             <div className="flex flex-col">
               <label className="block text-[10px] text-gray-500 uppercase mb-1">Ability</label>
               <select 
@@ -183,14 +170,8 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
                   </option>
                 ))}
               </select>
-              {member.abilityDescription && (
-                <div className="mt-1.5 p-1.5 bg-black/20 rounded border border-white/5 text-[10px] text-gray-400 leading-snug">
-                  {member.abilityDescription}
-                </div>
-              )}
             </div>
 
-            {/* Tera Type Select */}
             <div>
               <label className="block text-[10px] text-gray-500 uppercase mb-1">Tera Type</label>
               <select 
@@ -208,7 +189,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-gray-600 text-sm italic min-h-[100px]">
+        <div className="flex-1 flex items-center justify-center text-gray-600 text-sm italic">
           Empty Slot
         </div>
       )}
