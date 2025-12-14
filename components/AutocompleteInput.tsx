@@ -5,7 +5,7 @@ import { Loader2, Search } from 'lucide-react';
 interface AutocompleteInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (value?: string) => void;
   placeholder?: string;
   isLoading?: boolean;
   onBlur?: () => void;
@@ -70,16 +70,14 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   const handleSuggestionClick = (name: string) => {
     onChange(name);
     setShowSuggestions(false);
-    // Use timeout to allow state update to propagate before submitting
-    setTimeout(() => {
-        onSubmit();
-    }, 0);
+    // Pass the selected name directly to onSubmit to avoid state race conditions
+    onSubmit(name);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       setShowSuggestions(false);
-      onSubmit();
+      onSubmit(value);
     }
   };
 

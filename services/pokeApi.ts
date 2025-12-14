@@ -4,6 +4,8 @@ const BASE_URL = 'https://pokeapi.co/api/v2';
 
 // --- Cache for Autocomplete ---
 let cachedPokemonNames: string[] = [];
+// --- Cache for Move Types ---
+const moveTypeCache: Record<string, string> = {};
 
 export const getPokemonNames = async (): Promise<string[]> => {
   if (cachedPokemonNames.length > 0) return cachedPokemonNames;
@@ -133,9 +135,12 @@ export const fetchEvolutionInfo = async (speciesUrl: string, currentPokemonName:
 };
 
 export const fetchMoveType = async (url: string): Promise<string> => {
+  if (moveTypeCache[url]) return moveTypeCache[url];
+
   try {
     const res = await fetch(url);
     const data = await res.json();
+    moveTypeCache[url] = data.type.name;
     return data.type.name;
   } catch (e) {
     return "normal";

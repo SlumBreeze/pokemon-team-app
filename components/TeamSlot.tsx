@@ -19,12 +19,14 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
     setInputValue(member.customName);
   }, [member.customName]);
 
-  const handleSearch = async () => {
-    // Determine the name to search: prefer local input value
-    // This fixes issues where selecting from dropdown updates state but this function reads old state
-    const nameToSearch = inputValue; 
+  const handleSearch = async (overrideName?: string) => {
+    // Determine the name to search: prefer override if provided (from autocomplete selection)
+    const nameToSearch = typeof overrideName === 'string' ? overrideName : inputValue;
 
     if (!nameToSearch.trim()) return;
+
+    // Update input visually if we are searching via override
+    if (nameToSearch !== inputValue) setInputValue(nameToSearch);
 
     onUpdate(index, { loading: true, error: null, customName: nameToSearch });
 

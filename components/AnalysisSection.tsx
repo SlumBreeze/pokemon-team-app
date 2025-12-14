@@ -31,15 +31,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
   // Trigger analysis when enemyName changes if it was a selection (handled by caller logic usually, but here we can listen)
   // Actually, handleAnalyze should be called manually or via submit
   
-  const handleAnalyze = async () => {
-    // Force use of current state enemyName
-    if (!enemyName.trim()) return;
+  const handleAnalyze = async (overrideName?: string | React.MouseEvent) => {
+    // If overrideName is a string (passed from Autocomplete), use it. 
+    // If it's a mouse event (button click) or undefined, use state.
+    const nameToSearch = typeof overrideName === 'string' ? overrideName : enemyName;
+
+    if (!nameToSearch.trim()) return;
+
+    // Sync state if it was an override
+    if (typeof overrideName === 'string') setEnemyName(overrideName);
+
     setLoading(true);
     setError(null);
     setEnemyData(null);
 
     try {
-      const data = await fetchPokemon(enemyName);
+      const data = await fetchPokemon(nameToSearch);
       setEnemyData(data);
     } catch (err: any) {
       setError(err.message || "Opponent not found");
