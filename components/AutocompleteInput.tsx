@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getPokemonNames } from '../services/pokeApi';
 import { Loader2, Search } from 'lucide-react';
 
 interface AutocompleteInputProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (value?: string) => void;
+  fetchData: () => Promise<string[]>; // Made generic
   placeholder?: string;
   isLoading?: boolean;
   onBlur?: () => void;
@@ -15,19 +15,20 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   value, 
   onChange, 
   onSubmit, 
+  fetchData,
   placeholder, 
   isLoading,
   onBlur
 }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [allNames, setAllNames] = useState<string[]>([]);
+  const [allOptions, setAllOptions] = useState<string[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Load names once on mount
+  // Load data source on mount
   useEffect(() => {
-    getPokemonNames().then(setAllNames);
-  }, []);
+    fetchData().then(setAllOptions);
+  }, [fetchData]);
 
   // Handle clicking outside to close dropdown
   useEffect(() => {
@@ -51,7 +52,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     const lowerVal = value.toLowerCase();
     
     // Sort logic: Starts with query first, then alphabetical
-    const filtered = allNames
+    const filtered = allOptions
       .filter(n => n.includes(lowerVal))
       .sort((a, b) => {
         const aStarts = a.startsWith(lowerVal);
@@ -63,9 +64,9 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
       .slice(0, 8); // Limit to 8 suggestions for clean UI
 
     setSuggestions(filtered);
-    // Only show if we have results and it's not an exact match already (optional, but good UX)
+    // Only show if we have results and it's not an exact match already
     setShowSuggestions(filtered.length > 0 && filtered[0] !== lowerVal);
-  }, [value, allNames]);
+  }, [value, allOptions]);
 
   const handleSuggestionClick = (name: string) => {
     onChange(name);
@@ -98,7 +99,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
             }, 200);
         }}
         placeholder={placeholder}
-        className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors pr-8"
+        className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors pr-8 placeholder:text-gray-600"
         autoComplete="off"
       />
       

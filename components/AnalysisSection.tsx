@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TeamMember, PokemonData, MatchupResult, Boss } from '../types';
-import { fetchPokemon } from '../services/pokeApi';
+import { fetchPokemon, getPokemonNames } from '../services/pokeApi'; // Import getPokemonNames
 import { TYPE_COLORS, TYPE_NAMES, getMultiplier } from '../constants';
 import { BOSSES } from '../bosses';
 import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge, Skull, Zap, Map } from 'lucide-react';
@@ -223,6 +223,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                         setEnemyTera(''); // Clear tera if manual typing
                     }}
                     onSubmit={handleAnalyze}
+                    fetchData={getPokemonNames}
                     placeholder="Or enter Custom Opponent..."
                     isLoading={loading}
                  />

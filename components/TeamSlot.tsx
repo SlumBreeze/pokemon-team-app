@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TeamMember, TypeName } from '../types';
 import { TYPE_NAMES, TYPE_COLORS } from '../constants';
-import { AlertCircle, X, Sparkles } from 'lucide-react';
-import { fetchPokemon, fetchAbilityDescription, fetchEvolutionInfo } from '../services/pokeApi';
+import { AlertCircle, X, Sparkles, ShoppingBag, Info } from 'lucide-react';
+import { fetchPokemon, fetchAbilityDescription, fetchEvolutionInfo, getPokemonNames, getItemNames, fetchItemDescription } from '../services/pokeApi';
 import AutocompleteInput from './AutocompleteInput';
+import { getRecommendedItems, RecommendedItem } from '../itemRecommendations';
 
 interface TeamSlotProps {
   index: number;
@@ -14,18 +15,32 @@ interface TeamSlotProps {
 
 const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear }) => {
   const [inputValue, setInputValue] = useState(member.customName || '');
+  const [itemInputValue, setItemInputValue] = useState(member.heldItem || '');
+  const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
+  const [previewItemDesc, setPreviewItemDesc] = useState<string | null>(null);
   
   useEffect(() => {
     setInputValue(member.customName);
   }, [member.customName]);
 
-  const handleSearch = async (overrideName?: string) => {
-    // Determine the name to search: prefer override if provided (from autocomplete selection)
-    const nameToSearch = typeof overrideName === 'string' ? overrideName : inputValue;
+  useEffect(() => {
+    setItemInputValue(member.heldItem || '');
+  }, [member.heldItem]);
 
+  // Update recommendations whenever data or evolution details change
+  useEffect(() => {
+    if (member.data) {
+        const recs = getRecommendedItems(member.data, member.evolutionDetails);
+        setRecommendations(recs);
+    } else {
+        setRecommendations([]);
+    }
+  }, [member.data, member.evolutionDetails]);
+
+  const handleSearch = async (overrideName?: string) => {
+    const nameToSearch = typeof overrideName === 'string' ? overrideName : inputValue;
     if (!nameToSearch.trim()) return;
 
-    // Update input visually if we are searching via override
     if (nameToSearch !== inputValue) setInputValue(nameToSearch);
 
     onUpdate(index, { loading: true, error: null, customName: nameToSearch });
@@ -40,7 +55,6 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
         desc = await fetchAbilityDescription(abilityData.ability.url);
       }
 
-      // Fetch Evolution Info
       const evoInfo = await fetchEvolutionInfo(data.speciesUrl, data.name);
       
       onUpdate(index, {
@@ -51,9 +65,12 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
         teraType: data.types[0]?.type.name || 'normal',
         error: null,
         customName: '',
-        evolutionDetails: evoInfo
+        evolutionDetails: evoInfo,
+        heldItem: '', 
+        heldItemDescription: ''
       });
       setInputValue('');
+      setItemInputValue('');
     } catch (err: any) {
       onUpdate(index, {
         loading: false,
@@ -63,8 +80,27 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
     }
   };
 
+  const handleItemSelect = async (itemName?: string) => {
+    const itemToSet = itemName || itemInputValue;
+    if(!itemToSet) return;
+
+    onUpdate(index, { heldItem: itemToSet });
+    const desc = await fetchItemDescription(itemToSet);
+    onUpdate(index, { heldItem: itemToSet, heldItemDescription: desc });
+  };
+
+  const handleRecommendationHover = async (itemName: string | null) => {
+     if (!itemName) {
+         setPreviewItemDesc(null);
+         return;
+     }
+     const desc = await fetchItemDescription(itemName);
+     setPreviewItemDesc(desc);
+  };
+
   const clearSlot = () => {
     setInputValue('');
+    setItemInputValue('');
     onClear(index);
   };
 
@@ -79,11 +115,12 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
         )}
       </div>
 
-      <div className="relative z-10"> {/* Higher Z-Index for dropdown */}
+      <div className="relative z-10">
         <AutocompleteInput 
           value={inputValue}
           onChange={setInputValue}
           onSubmit={handleSearch}
+          fetchData={getPokemonNames}
           placeholder={member.data ? "Replace..." : "Enter Pokémon..."}
           isLoading={member.loading}
           onBlur={() => { if(inputValue && inputValue !== member.customName && !member.data) handleSearch() }}
@@ -99,6 +136,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
 
       {member.data ? (
         <div className="flex flex-col gap-3 animate-fade-in flex-grow">
+          {/* Header Info */}
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 flex-shrink-0 bg-dark/50 rounded-full flex items-center justify-center border border-gray-700 relative">
               <img 
@@ -149,7 +187,8 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2 mt-auto items-start">
+          {/* Controls */}
+          <div className="grid grid-cols-2 gap-2 items-start">
             <div className="flex flex-col">
               <label className="block text-[10px] text-gray-500 uppercase mb-1">Ability</label>
               <select 
@@ -189,6 +228,59 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear })
               </select>
             </div>
           </div>
+
+          {/* Held Item Section */}
+          <div>
+            <label className="block text-[10px] text-gray-500 uppercase mb-1">Held Item</label>
+            <div className="relative z-0">
+                <AutocompleteInput 
+                    value={itemInputValue}
+                    onChange={setItemInputValue}
+                    onSubmit={handleItemSelect}
+                    fetchData={getItemNames}
+                    placeholder="Search Item..."
+                    onBlur={() => handleItemSelect(itemInputValue)}
+                />
+            </div>
+            
+            {/* Description Box (Shows Selected Item OR Hover Preview) */}
+            <div className="mt-1 min-h-[30px] bg-dark/30 border border-gray-800 rounded px-2 py-1.5">
+                {previewItemDesc ? (
+                    <p className="text-[10px] text-violet-300 animate-in fade-in leading-snug">
+                       <strong className="text-violet-400">Preview:</strong> {previewItemDesc}
+                    </p>
+                ) : member.heldItemDescription ? (
+                    <p className="text-[10px] text-gray-400 leading-snug">{member.heldItemDescription}</p>
+                ) : (
+                    <p className="text-[10px] text-gray-600 italic">No item selected</p>
+                )}
+            </div>
+          </div>
+
+          {/* Item Recommendations */}
+          {recommendations.length > 0 && (
+             <div className="mt-1">
+                 <div className="flex items-center gap-1 text-[10px] text-gray-500 uppercase font-bold mb-1">
+                    <ShoppingBag size={10} />
+                    Recommended
+                 </div>
+                 <div className="flex flex-wrap gap-1">
+                    {recommendations.map(item => (
+                        <button 
+                            key={item.name} 
+                            onClick={() => handleItemSelect(item.name)}
+                            onMouseEnter={() => handleRecommendationHover(item.name)}
+                            onMouseLeave={() => handleRecommendationHover(null)}
+                            className="px-1.5 py-0.5 bg-dark border border-gray-600 hover:bg-gray-700 hover:border-gray-500 rounded flex items-center gap-1.5 transition-colors group text-left"
+                        >
+                            <span className="text-[10px] font-bold text-gray-300 group-hover:text-white transition-colors">{item.name}</span>
+                            <span className="text-[9px] text-gray-500 group-hover:text-gray-400 hidden sm:inline-block">({item.reason})</span>
+                        </button>
+                    ))}
+                 </div>
+             </div>
+          )}
+
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-600 text-sm italic">

@@ -52,6 +52,8 @@ export interface TeamMember {
   selectedAbility: string;
   abilityDescription?: string;
   teraType: string;
+  heldItem?: string;
+  heldItemDescription?: string;
   level: number;
   loading: boolean;
   error: string | null;

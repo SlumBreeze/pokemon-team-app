@@ -2,10 +2,11 @@ import { PokemonData, MoveInfo } from '../types';
 
 const BASE_URL = 'https://pokeapi.co/api/v2';
 
-// --- Cache for Autocomplete ---
+// --- Cache ---
 let cachedPokemonNames: string[] = [];
-// --- Cache for Move Types ---
+let cachedItemNames: string[] = [];
 const moveTypeCache: Record<string, string> = {};
+const itemDescCache: Record<string, string> = {};
 
 export const getPokemonNames = async (): Promise<string[]> => {
   if (cachedPokemonNames.length > 0) return cachedPokemonNames;
@@ -19,6 +20,51 @@ export const getPokemonNames = async (): Promise<string[]> => {
   } catch (error) {
     console.error("Failed to fetch pokemon list", error);
     return [];
+  }
+};
+
+export const getItemNames = async (): Promise<string[]> => {
+  if (cachedItemNames.length > 0) return cachedItemNames;
+  
+  try {
+    const response = await fetch(`${BASE_URL}/item?limit=2000`);
+    const data = await response.json();
+    cachedItemNames = data.results.map((i: any) => i.name);
+    return cachedItemNames;
+  } catch (error) {
+    console.error("Failed to fetch item list", error);
+    return [];
+  }
+};
+
+export const fetchItemDescription = async (itemName: string): Promise<string> => {
+  if (!itemName) return "";
+  const cleanName = itemName.trim().toLowerCase().replace(/ /g, '-');
+  
+  if (itemDescCache[cleanName]) return itemDescCache[cleanName];
+
+  try {
+    const response = await fetch(`${BASE_URL}/item/${cleanName}`);
+    if (!response.ok) return "No description available.";
+    const data = await response.json();
+
+    const effectEntry = data.effect_entries.find((e: any) => e.language.name === 'en');
+    let desc = "";
+    if (effectEntry) {
+      desc = effectEntry.short_effect || effectEntry.effect;
+    } else {
+       const flavorEntry = data.flavor_text_entries.find((e: any) => e.language.name === 'en');
+       if (flavorEntry) {
+         desc = flavorEntry.flavor_text.replace(/[\n\f]/g, ' ');
+       } else {
+         desc = "No description available.";
+       }
+    }
+    
+    itemDescCache[cleanName] = desc;
+    return desc;
+  } catch (e) {
+    return "Failed to load description.";
   }
 };
 
