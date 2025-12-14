@@ -57,6 +57,7 @@ export type TypeName =
 export interface MatchupResult {
   memberId: string;
   offensiveScore: number; // Max multiplier
+  defensiveScore: number; // Max incoming damage multiplier
   bestMoveType: string;
   speedDiff: number;
   speedTier: 'faster' | 'slower' | 'tie';

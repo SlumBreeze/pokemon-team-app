@@ -6,6 +6,11 @@ export const TYPE_NAMES: TypeName[] = [
   "rock", "ghost", "dragon", "steel", "dark", "fairy"
 ];
 
+// Helper to validate incoming API types
+export const isValidType = (type: string): type is TypeName => {
+  return TYPE_NAMES.includes(type as TypeName);
+};
+
 // 0: Immune, 0.5: Not Very Effective, 1: Neutral, 2: Super Effective
 // Rows: Attacker, Columns: Defender
 export const TYPE_CHART: number[][] = [
@@ -48,6 +53,7 @@ export const TYPE_COLORS: Record<string, string> = {
   steel: '#B7B7CE',
   dark: '#705746',
   fairy: '#D685AD',
+  stellar: '#4C60E9', // DLC Type Fallback
 };
 
 export const getMultiplier = (attacker: string, defender: string): number => {

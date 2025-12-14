@@ -1,22 +1,28 @@
 import React, { useState } from 'react';
 import { TeamMember, PokemonData, MatchupResult } from '../types';
 import { fetchPokemon } from '../services/pokeApi';
-import { TYPE_COLORS, getMultiplier } from '../constants';
-import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge } from 'lucide-react';
+import { TYPE_COLORS, getMultiplier, isValidType } from '../constants';
+import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge, Skull, Zap } from 'lucide-react';
 
 interface AnalysisSectionProps {
   team: TeamMember[];
 }
 
-// Estimate real stat using simplified Gen 3+ formula (Assuming 31 IV, 0 EV for generic comparison)
-// Stat = floor( ( (2 * Base + 31) * Level ) / 100 ) + 5
-const calculateStat = (base: number, level: number): number => {
+// Estimate real stat
+const calculateStat = (base: number, level: number, isCompetitive: boolean): number => {
+  if (isCompetitive) {
+    // Competitive: 31 IV, 252 EV, +10% Nature
+    const stat = Math.floor((((2 * base + 31 + 63) * level) / 100) + 5);
+    return Math.floor(stat * 1.1);
+  }
+  // Standard: 31 IV, 0 EV, Neutral Nature
   return Math.floor(((2 * base + 31) * level) / 100) + 5;
 };
 
 const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
   const [enemyName, setEnemyName] = useState('');
   const [enemyLevel, setEnemyLevel] = useState(50);
+  const [isCompetitive, setIsCompetitive] = useState(false);
   const [enemyData, setEnemyData] = useState<PokemonData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,23 +46,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
   const calculateMatchups = (enemy: PokemonData): MatchupResult[] => {
     const enemyTypes = enemy.types.map(t => t.type.name);
     const enemyBaseSpeed = enemy.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
-    const realEnemySpeed = calculateStat(enemyBaseSpeed, enemyLevel);
+    const realEnemySpeed = calculateStat(enemyBaseSpeed, enemyLevel, isCompetitive);
 
     return team.map(member => {
       if (!member.data) return null;
 
+      // Speed Calc
       const memberBaseSpeed = member.data.stats.find(s => s.stat.name === 'speed')?.base_stat || 0;
-      const realMemberSpeed = calculateStat(memberBaseSpeed, member.level);
-      
+      const realMemberSpeed = calculateStat(memberBaseSpeed, member.level, isCompetitive);
       const speedDiff = realMemberSpeed - realEnemySpeed;
       
       let speedTier: MatchupResult['speedTier'] = 'tie';
-      // Speed ties in pokemon are strict, but let's give a small buffer for "tie" visually if exact match or very close
       if (speedDiff > 0) speedTier = 'faster';
       else if (speedDiff < 0) speedTier = 'slower';
 
-      // Offensive Calculation
-      // We check all the user's base types + their Tera type
+      // --- Offensive Calculation ---
+      // We check all the user's base types + their Tera type (assuming they might use it offensively)
       const attackTypes = new Set<string>();
       member.data.types.forEach(t => attackTypes.add(t.type.name));
       if (member.teraType) attackTypes.add(member.teraType);
@@ -81,9 +86,30 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
       else if (maxMultiplier >= 2) message = "Super Effective (2x)";
       else if (maxMultiplier < 1) message = "Not Effective";
 
+      // --- Defensive Calculation (Incoming Damage) ---
+      // Check Enemy's types against My Defenses (Tera replaces defense!)
+      // If the user has selected a Tera Type that is different from their base primary type, 
+      // we treat that as their defensive profile for this calculation to show the "Tera Matchup" potential.
+      const isTeraDefensivelyActive = member.teraType && member.teraType !== member.data.types[0].type.name;
+      
+      const myDefensiveTypes = isTeraDefensivelyActive 
+        ? [member.teraType] // If Tera, defense is ONLY Tera type
+        : member.data.types.map(t => t.type.name); // Else, defense is base types
+
+      let maxIncomingDamage = 0;
+
+      enemyTypes.forEach(enemyType => {
+        let mult = getMultiplier(enemyType, myDefensiveTypes[0]);
+        if (myDefensiveTypes[1]) {
+          mult *= getMultiplier(enemyType, myDefensiveTypes[1]);
+        }
+        if (mult > maxIncomingDamage) maxIncomingDamage = mult;
+      });
+
       return {
         memberId: member.id,
         offensiveScore: maxMultiplier,
+        defensiveScore: maxIncomingDamage,
         bestMoveType,
         speedDiff,
         speedTier,
@@ -103,39 +129,55 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
         Combat Analysis
       </h2>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-grow flex gap-2">
-           <input 
-            type="text"
-            value={enemyName}
-            onChange={(e) => setEnemyName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
-            placeholder="Enter Opponent Name (e.g. Garchomp)..."
-            className="flex-grow bg-dark border border-gray-600 rounded px-4 py-3 text-white focus:outline-none focus:border-scarlet-500 text-lg placeholder-gray-600"
-          />
-          <div className="w-24 bg-dark border border-gray-600 rounded flex flex-col px-2 py-1 justify-center">
-            <label className="text-[10px] text-gray-400 uppercase font-bold">Level</label>
-            <input 
-              type="number" 
-              value={enemyLevel} 
-              min="1" max="100"
-              onChange={(e) => {
-                 let val = parseInt(e.target.value) || 50;
-                 if(val > 100) val = 100;
-                 if(val < 1) val = 1;
-                 setEnemyLevel(val);
-              }}
-              className="bg-transparent text-white font-mono text-lg focus:outline-none"
+      {/* Input Row */}
+      <div className="flex flex-col gap-4 mb-8">
+        <div className="flex flex-col md:flex-row gap-4">
+           <div className="relative flex-grow flex gap-2">
+             <input 
+              type="text"
+              value={enemyName}
+              onChange={(e) => setEnemyName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
+              placeholder="Enter Opponent Name (e.g. Garchomp)..."
+              className="flex-grow bg-dark border border-gray-600 rounded px-4 py-3 text-white focus:outline-none focus:border-scarlet-500 text-lg placeholder-gray-600"
             />
+            <div className="w-24 bg-dark border border-gray-600 rounded flex flex-col px-2 py-1 justify-center">
+              <label className="text-[10px] text-gray-400 uppercase font-bold">Level</label>
+              <input 
+                type="number" 
+                value={enemyLevel} 
+                min="1" max="100"
+                onChange={(e) => {
+                   let val = parseInt(e.target.value) || 50;
+                   if(val > 100) val = 100;
+                   if(val < 1) val = 1;
+                   setEnemyLevel(val);
+                }}
+                className="bg-transparent text-white font-mono text-lg focus:outline-none"
+              />
+            </div>
           </div>
+          <button 
+            onClick={handleAnalyze}
+            disabled={loading}
+            className="bg-gradient-to-r from-scarlet-600 to-red-700 hover:from-scarlet-500 hover:to-red-600 text-white font-bold py-3 px-8 rounded shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 min-w-[160px]"
+          >
+            {loading ? <Loader2 className="animate-spin" /> : 'ANALYZE'}
+          </button>
         </div>
-        <button 
-          onClick={handleAnalyze}
-          disabled={loading}
-          className="bg-gradient-to-r from-scarlet-600 to-red-700 hover:from-scarlet-500 hover:to-red-600 text-white font-bold py-3 px-8 rounded shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 min-w-[160px]"
-        >
-          {loading ? <Loader2 className="animate-spin" /> : 'ANALYZE'}
-        </button>
+
+        {/* Settings Row */}
+        <div className="flex items-center gap-2 bg-dark/50 p-2 rounded-lg self-start border border-gray-700">
+           <Zap size={16} className={isCompetitive ? "text-yellow-400" : "text-gray-500"} />
+           <span className="text-sm text-gray-300 font-bold uppercase">Competitive Mode</span>
+           <button 
+             onClick={() => setIsCompetitive(!isCompetitive)}
+             className={`w-10 h-5 rounded-full relative transition-colors duration-200 ease-in-out ${isCompetitive ? 'bg-violet-600' : 'bg-gray-600'}`}
+           >
+             <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all duration-200 ${isCompetitive ? 'left-6' : 'left-1'}`} />
+           </button>
+           <span className="text-xs text-gray-500 ml-2">(Max IVs/EVs & +Nature)</span>
+        </div>
       </div>
 
       {error && (
@@ -149,7 +191,6 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
         <div className="animate-fade-in">
           {/* Enemy Header */}
           <div className="flex items-center gap-6 p-4 bg-dark rounded-lg border border-gray-700 mb-6 relative overflow-hidden">
-             {/* Background Decoration */}
              <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-red-900/20 to-transparent pointer-events-none"></div>
 
              <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-gray-600 z-10">
@@ -169,7 +210,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                     <span 
                       key={t.type.name}
                       className="px-2 py-1 rounded text-xs font-bold text-white uppercase"
-                      style={{ backgroundColor: TYPE_COLORS[t.type.name] }}
+                      style={{ backgroundColor: TYPE_COLORS[t.type.name] || '#555' }}
                     >
                       {t.type.name}
                     </span>
@@ -177,7 +218,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                 </div>
                 <div className="mt-2 text-gray-400 font-mono text-sm flex items-center gap-2">
                   <Gauge size={14} />
-                  Est. Speed: <span className="text-white font-bold">{calculateStat(enemyData.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, enemyLevel)}</span>
+                  Est. Speed: <span className="text-white font-bold">{calculateStat(enemyData.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, enemyLevel, isCompetitive)}</span>
                 </div>
              </div>
           </div>
@@ -188,7 +229,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
               const member = team.find(m => m.id === matchup.memberId);
               if (!member?.data) return null;
 
-              // Determine card styling based on effectiveness
+              // Determine card styling based on offensive match
               let borderColor = 'border-gray-600';
               let bgGlow = '';
               
@@ -205,7 +246,15 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
 
               return (
                 <div key={idx} className={`border-l-4 ${borderColor} ${bgGlow} bg-card p-4 rounded r-0 flex flex-col gap-2 relative overflow-hidden transition-all hover:bg-[#333]`}>
-                  <div className="flex justify-between items-start">
+                  
+                  {/* Danger Overlay if needed */}
+                  {matchup.defensiveScore >= 2 && (
+                     <div className="absolute right-2 top-2 animate-pulse" title="Opponent has super effective moves!">
+                       <Skull size={20} className={matchup.defensiveScore >= 4 ? "text-red-500" : "text-orange-500"} />
+                     </div>
+                  )}
+
+                  <div className="flex justify-between items-start pr-6">
                     <div>
                       <span className="font-bold capitalize text-lg block">{member.data.name}</span>
                       <span className="text-xs text-gray-500">Lv. {member.level}</span>
@@ -226,6 +275,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                     </div>
                   </div>
 
+                  {/* Offensive Summary */}
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-gray-400 text-sm">Best Type:</span>
                     <span 
@@ -236,9 +286,21 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                     </span>
                   </div>
 
-                  <div className={`mt-2 font-bold text-sm ${matchup.offensiveScore >= 2 ? 'text-green-400' : matchup.offensiveScore < 1 ? 'text-red-400' : 'text-gray-300'}`}>
+                  <div className={`mt-1 font-bold text-sm ${matchup.offensiveScore >= 2 ? 'text-green-400' : matchup.offensiveScore < 1 ? 'text-red-400' : 'text-gray-300'}`}>
                     {matchup.message}
                   </div>
+
+                  {/* Defensive Warning */}
+                  {matchup.defensiveScore >= 1 && (
+                    <div className={`mt-3 pt-2 border-t border-white/5 text-xs flex items-center gap-2 ${matchup.defensiveScore >= 2 ? 'text-red-400' : 'text-gray-400'}`}>
+                      {matchup.defensiveScore >= 2 ? <ShieldAlert size={14} /> : <div className="w-3" />}
+                      <span>
+                        {matchup.defensiveScore >= 4 ? "Takes 4x Damage!" : 
+                         matchup.defensiveScore >= 2 ? "Takes Super Effective Dmg!" : 
+                         "Takes Neutral Damage."}
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
