@@ -46,6 +46,13 @@ export interface PokemonData {
   moves: MoveInfo[];
 }
 
+export interface EvolutionData {
+  isFullyEvolved: boolean;
+  nextEvolutionName?: string;
+  minLevel?: number;
+  triggerCondition?: string;
+}
+
 export interface TeamMember {
   id: string;
   data: PokemonData | null;
@@ -58,7 +65,8 @@ export interface TeamMember {
   loading: boolean;
   error: string | null;
   customName: string;
-  evolutionDetails?: string;
+  evolutionDetails?: EvolutionData | null;
+  locked?: boolean;
 }
 
 export interface Boss {

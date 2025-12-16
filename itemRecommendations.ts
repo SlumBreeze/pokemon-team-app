@@ -1,4 +1,4 @@
-import { PokemonData } from './types';
+import { PokemonData, EvolutionData } from './types';
 
 export interface RecommendedItem {
   name: string;
@@ -26,7 +26,7 @@ const TYPE_ITEMS: Record<string, string> = {
   fairy: 'Fairy Feather',
 };
 
-export const getRecommendedItems = (pokemon: PokemonData, evolutionDetails?: string): RecommendedItem[] => {
+export const getRecommendedItems = (pokemon: PokemonData, evolutionDetails?: EvolutionData | null): RecommendedItem[] => {
   const items: RecommendedItem[] = [];
   
   // 1. Check Stats (Physical vs Special)
@@ -49,7 +49,8 @@ export const getRecommendedItems = (pokemon: PokemonData, evolutionDetails?: str
   });
 
   // 3. Check Friendship Evolution (Soothe Bell)
-  if (evolutionDetails && evolutionDetails.toLowerCase().includes('friendship')) {
+  // Check if it's not fully evolved AND condition contains "Friendship"
+  if (evolutionDetails && !evolutionDetails.isFullyEvolved && evolutionDetails.triggerCondition?.toLowerCase().includes('friendship')) {
       items.push({ name: 'Soothe Bell', reason: 'Required for Evo' });
   }
 

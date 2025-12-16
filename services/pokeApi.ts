@@ -1,4 +1,4 @@
-import { PokemonData, MoveInfo } from '../types';
+import { PokemonData, MoveInfo, EvolutionData } from '../types';
 
 const BASE_URL = 'https://pokeapi.co/api/v2';
 
@@ -7,6 +7,8 @@ let cachedPokemonNames: string[] = [];
 let cachedItemNames: string[] = [];
 const moveTypeCache: Record<string, string> = {};
 const itemDescCache: Record<string, string> = {};
+const pokemonCache: Record<string, PokemonData> = {}; // Cache full pokemon data
+let cachedPaldeaDex: { name: string; id: number }[] = [];
 
 export const getPokemonNames = async (): Promise<string[]> => {
   if (cachedPokemonNames.length > 0) return cachedPokemonNames;
@@ -19,6 +21,31 @@ export const getPokemonNames = async (): Promise<string[]> => {
     return cachedPokemonNames;
   } catch (error) {
     console.error("Failed to fetch pokemon list", error);
+    return [];
+  }
+};
+
+export const getPaldeaPokedex = async (): Promise<{ name: string; id: number }[]> => {
+  if (cachedPaldeaDex.length > 0) return cachedPaldeaDex;
+
+  try {
+    // Paldea Pokedex ID is 31
+    const response = await fetch(`${BASE_URL}/pokedex/31`);
+    const data = await response.json();
+    
+    cachedPaldeaDex = data.pokemon_entries.map((entry: any) => {
+      // Extract ID from URL (e.g., https://pokeapi.co/api/v2/pokemon-species/906/)
+      const urlParts = entry.pokemon_species.url.split('/');
+      const id = parseInt(urlParts[urlParts.length - 2]);
+      return {
+        name: entry.pokemon_species.name,
+        id: id
+      };
+    });
+    
+    return cachedPaldeaDex;
+  } catch (error) {
+    console.error("Failed to fetch Paldea Pokedex", error);
     return [];
   }
 };
@@ -73,11 +100,32 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
   
   const cleanName = name.trim().toLowerCase().replace(/[\s.]/g, '-').replace(/[^a-z0-9-]/g, '');
 
-  const response = await fetch(`${BASE_URL}/pokemon/${cleanName}`);
+  if (pokemonCache[cleanName]) return pokemonCache[cleanName];
+
+  let response = await fetch(`${BASE_URL}/pokemon/${cleanName}`);
+  
+  // FAILOVER: If specific pokemon name not found (404), try to find it via species default variety
+  // This handles cases like 'oricorio' -> 'oricorio-baile', 'squawkabilly' -> 'squawkabilly-green-plumage', 'mimikyu' -> 'mimikyu-disguised'
+  if (!response.ok && response.status === 404) {
+      try {
+          const speciesResponse = await fetch(`${BASE_URL}/pokemon-species/${cleanName}`);
+          if (speciesResponse.ok) {
+              const speciesData = await speciesResponse.json();
+              const defaultVariety = speciesData.varieties.find((v: any) => v.is_default);
+              if (defaultVariety) {
+                   // Fetch the default variety URL directly
+                   response = await fetch(defaultVariety.pokemon.url);
+              }
+          }
+      } catch (e) {
+          // Fallback failed, proceed to standard error handling
+          console.warn(`Species fallback failed for ${cleanName}`);
+      }
+  }
   
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error("Pokémon not found");
+      throw new Error(`Pokémon not found: ${name}`);
     }
     throw new Error("Failed to fetch Pokémon data");
   }
@@ -87,7 +135,6 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
   // Process Moves: Include level-up AND machine (TMs) for catching utility
   const moves: MoveInfo[] = data.moves
     .map((m: any) => {
-      // Find version group details (preferring SV/Gen9, but fallback to latest available)
       const detail = m.version_group_details[m.version_group_details.length - 1];
       return {
         name: m.move.name,
@@ -98,17 +145,19 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
     })
     .filter((m: MoveInfo) => m.learn_method === 'level-up' || m.learn_method === 'machine')
     .sort((a: MoveInfo, b: MoveInfo) => {
-        // Sort level up moves first, then by level
         if (a.learn_method === 'level-up' && b.learn_method !== 'level-up') return -1;
         if (a.learn_method !== 'level-up' && b.learn_method === 'level-up') return 1;
         return b.level_learned_at - a.level_learned_at;
     });
 
-  return {
+  const result = {
     ...data,
     speciesUrl: data.species.url,
     moves: moves
   } as PokemonData;
+
+  pokemonCache[cleanName] = result;
+  return result;
 };
 
 export const fetchAbilityDescription = async (url: string): Promise<string> => {
@@ -134,7 +183,7 @@ export const fetchAbilityDescription = async (url: string): Promise<string> => {
   }
 };
 
-export const fetchEvolutionInfo = async (speciesUrl: string, currentPokemonName: string): Promise<string> => {
+export const fetchEvolutionInfo = async (speciesUrl: string, currentPokemonName: string): Promise<EvolutionData | null> => {
   try {
     const speciesRes = await fetch(speciesUrl);
     const speciesData = await speciesRes.json();
@@ -144,10 +193,26 @@ export const fetchEvolutionInfo = async (speciesUrl: string, currentPokemonName:
 
     let chain = chainData.chain;
     
-    // Traverse to find current pokemon
-    // Recursive search helper
+    // Helper recursive find
     const findNode = (node: any): any => {
-      if (node.species.name === currentPokemonName) return node;
+      // API names are lowercase
+      // Flexible matching: check if species name matches, or if current pokemon name includes species name
+      // This helps with varieties like 'oricorio-baile' matching 'oricorio'
+      const nodeName = node.species.name.toLowerCase();
+      const currName = currentPokemonName.toLowerCase();
+      
+      if (currName === nodeName) return node;
+      // If we are looking at a variety name (e.g. squawkabilly-green-plumage), it might not match species name 'squawkabilly' directly in some recursive logic? 
+      // Actually species.name IS 'squawkabilly'. currentPokemonName is 'squawkabilly-green-plumage'.
+      // If the node.species.name is inside the current name, we might assume it is the correct node if it's the base.
+      // However, usually the chain nodes are species.
+      
+      // Let's try precise match first, if failure, we might need logic change. 
+      // But for now, let's stick to standard node traversal.
+      // Usually fetchEvolutionInfo is called with data.name. If data.name is 'oricorio-baile' and species is 'oricorio',
+      // the chain only has 'oricorio'.
+      if (currName.includes(nodeName)) return node;
+
       for (const child of node.evolves_to) {
         const found = findNode(child);
         if (found) return found;
@@ -158,30 +223,44 @@ export const fetchEvolutionInfo = async (speciesUrl: string, currentPokemonName:
     const currentNode = findNode(chain);
     
     if (currentNode && currentNode.evolves_to.length > 0) {
-      const next = currentNode.evolves_to[0]; // Just take first path for simplicity
+      const next = currentNode.evolves_to[0]; 
       const details = next.evolution_details[0];
       const targetName = next.species.name;
       
-      let reason = "Unknown";
+      let condition = "Unknown";
+      let minLevel = undefined;
+      
       if (details) {
         if (details.trigger.name === 'level-up') {
-            if (details.min_level) reason = `Level ${details.min_level}`;
-            else if (details.min_happiness) reason = "High Friendship";
-            else if (details.held_item) reason = `Hold ${details.held_item.name}`;
-            else if (details.known_move) reason = `Know ${details.known_move.name}`;
-            else reason = "Level Up Condition";
+            if (details.min_level) {
+                condition = `Level ${details.min_level}`;
+                minLevel = details.min_level;
+            }
+            else if (details.min_happiness) condition = "High Friendship";
+            else if (details.held_item) condition = `Hold ${details.held_item.name}`;
+            else if (details.known_move) condition = `Know ${details.known_move.name}`;
+            else condition = "Level Up Condition";
         } else if (details.trigger.name === 'use-item') {
-            reason = `Use ${details.item.name}`;
+            condition = `Use ${details.item.name}`;
         } else if (details.trigger.name === 'trade') {
-            reason = "Trade";
+            condition = "Trade";
         }
       }
-      return `-> ${targetName} (${reason})`;
+
+      return {
+          isFullyEvolved: false,
+          nextEvolutionName: targetName,
+          minLevel,
+          triggerCondition: condition
+      };
     }
 
-    return "Fully Evolved";
+    return {
+        isFullyEvolved: true
+    };
   } catch (error) {
-    return "";
+    console.error("Fetch Evo Error", error);
+    return null;
   }
 };
 

@@ -3,12 +3,15 @@ import { TeamMember, PokemonData, MatchupResult } from '../types';
 import { fetchPokemon, getPokemonNames } from '../services/pokeApi';
 import { TYPE_COLORS, TYPE_NAMES, getMultiplier } from '../constants';
 import { BOSSES } from '../bosses';
-import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge, Skull, Zap, Map, CircleDot, Crown } from 'lucide-react';
+import { Loader2, Sword, ShieldAlert, ArrowUpCircle, ArrowDownCircle, MinusCircle, Gauge, Skull, Zap, Map, CircleDot, Crown, CheckCircle } from 'lucide-react';
 import MoveRecommender from './MoveRecommender';
 import AutocompleteInput from './AutocompleteInput';
 
 interface AnalysisSectionProps {
   team: TeamMember[];
+  onBossSelect: (type: string | undefined) => void;
+  caughtPokemon: string[];
+  onToggleCaught: (name: string) => void;
 }
 
 // Special moves for catching
@@ -26,7 +29,7 @@ const calculateStat = (base: number, level: number, isCompetitive: boolean): num
   return Math.floor(((2 * base + 31) * level) / 100) + 5;
 };
 
-const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
+const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team, onBossSelect, caughtPokemon, onToggleCaught }) => {
   const [enemyName, setEnemyName] = useState('');
   const [enemyLevel, setEnemyLevel] = useState(20);
   const [enemyTera, setEnemyTera] = useState<string>(''); // For bosses
@@ -56,11 +59,18 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
   };
 
   const loadBoss = (bossName: string) => {
+    if (!bossName) {
+        setEnemyName('');
+        setEnemyTera('');
+        onBossSelect(undefined);
+        return;
+    }
     const boss = BOSSES.find(b => b.name === bossName);
     if (!boss) return;
     setEnemyName(boss.ace);
     setEnemyLevel(boss.level);
     setEnemyTera(boss.tera);
+    onBossSelect(boss.tera);
     fetchBossData(boss.ace);
   };
 
@@ -261,6 +271,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
 
   const teamWeaknesses = getTeamWeaknesses();
 
+  // Helper for catch button
+  const isCaught = enemyData ? caughtPokemon.includes(enemyData.name) : false;
+
   return (
     <div className="mt-8 bg-[#222] border-t-4 border-scarlet-600 rounded-lg p-6 shadow-2xl">
       <h2 className="text-2xl font-bold uppercase tracking-widest text-white mb-6 flex items-center gap-3">
@@ -296,6 +309,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                     onChange={(val) => {
                         setEnemyName(val);
                         setEnemyTera(''); // Clear tera if manual typing
+                        onBossSelect(undefined);
                     }}
                     onSubmit={handleAnalyze}
                     fetchData={getPokemonNames}
@@ -351,7 +365,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
       {enemyData && (
         <div className="animate-fade-in">
           {/* Enemy Header */}
-          <div className="flex items-center gap-6 p-4 bg-dark rounded-lg border border-gray-700 mb-6 relative overflow-hidden">
+          <div className="flex items-center gap-6 p-4 bg-dark rounded-lg border border-gray-700 mb-6 relative overflow-hidden group">
              <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-red-900/20 to-transparent pointer-events-none"></div>
 
              <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-gray-600 z-10 relative">
@@ -366,11 +380,28 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team }) => {
                    </div>
                )}
              </div>
-             <div className="z-10">
-                <h3 className="text-2xl font-bold capitalize text-white flex items-center gap-2">
-                  {enemyData.name}
-                  <span className="text-sm bg-gray-700 px-2 py-0.5 rounded text-gray-300">Lv. {enemyLevel}</span>
-                </h3>
+             <div className="z-10 flex-grow">
+                <div className="flex items-center gap-4">
+                    <h3 className="text-2xl font-bold capitalize text-white flex items-center gap-2">
+                        {enemyData.name}
+                        <span className="text-sm bg-gray-700 px-2 py-0.5 rounded text-gray-300">Lv. {enemyLevel}</span>
+                    </h3>
+                    
+                    {/* Catch Button */}
+                    <button
+                        onClick={() => onToggleCaught(enemyData.name)}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${
+                            isCaught 
+                                ? 'bg-green-600 hover:bg-green-500 text-white border border-green-400' 
+                                : 'bg-white hover:bg-gray-200 text-red-600 border border-red-500'
+                        }`}
+                        title={isCaught ? "Remove from Pokedex" : "Add to Pokedex"}
+                    >
+                        {isCaught ? <CheckCircle size={14} /> : <CircleDot size={14} />}
+                        {isCaught ? "Caught" : "Catch"}
+                    </button>
+                </div>
+
                 <div className="flex gap-2 mt-2">
                   {enemyData.types.map(t => (
                     <span 
