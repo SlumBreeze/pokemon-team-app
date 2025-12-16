@@ -50,58 +50,56 @@ const App: React.FC = () => {
   const team = activeProfile?.team || INITIAL_TEAM;
   const caughtPokemon = activeProfile?.caughtPokemon || [];
 
-  // --- Profile Persistence ---
+  // --- Profile Persistence (API) ---
   useEffect(() => {
-    // Load profiles on mount
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: ProfilesState = JSON.parse(saved);
-        setProfiles(parsed.profiles);
-        setActiveProfileId(parsed.activeProfileId);
-      } else {
-        // Check for old save data to migrate
-        const oldSave = localStorage.getItem('sv-team-analyzer-v2');
-        const defaultProfile = createDefaultProfile();
+    // Load profiles from server on mount
+    const loadProfiles = async () => {
+      try {
+        const response = await fetch('/api/profiles');
+        const data = await response.json();
 
-        if (oldSave) {
-          try {
-            const oldParsed = JSON.parse(oldSave);
-            if (Array.isArray(oldParsed)) {
-              defaultProfile.team = oldParsed;
-            } else {
-              if (oldParsed.team) defaultProfile.team = oldParsed.team;
-              if (oldParsed.caughtPokemon) defaultProfile.caughtPokemon = oldParsed.caughtPokemon;
-            }
-            defaultProfile.name = 'Migrated Save';
-          } catch (e) {
-            console.error("Failed to migrate old save", e);
-          }
+        if (data && data.profiles && Object.keys(data.profiles).length > 0) {
+          setProfiles(data.profiles);
+          setActiveProfileId(data.activeProfileId);
+        } else {
+          // No saved profiles, create default
+          const defaultProfile = createDefaultProfile();
+          setProfiles({ [defaultProfile.id]: defaultProfile });
+          setActiveProfileId(defaultProfile.id);
         }
-
+      } catch (e) {
+        console.error("Failed to load profiles from server:", e);
+        // Fallback to default profile if server unavailable
+        const defaultProfile = createDefaultProfile();
         setProfiles({ [defaultProfile.id]: defaultProfile });
         setActiveProfileId(defaultProfile.id);
       }
-    } catch (e) {
-      console.error("Failed to load profiles", e);
-      const defaultProfile = createDefaultProfile();
-      setProfiles({ [defaultProfile.id]: defaultProfile });
-      setActiveProfileId(defaultProfile.id);
-    }
-    setIsLoaded(true);
+      setIsLoaded(true);
+    };
+
+    loadProfiles();
   }, []);
 
+  // Save profiles to server on change (debounced)
   useEffect(() => {
-    // Save profiles on change
     if (!isLoaded || Object.keys(profiles).length === 0) return;
 
-    try {
-      const state: ProfilesState = { activeProfileId, profiles };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error("Failed to save profiles", e);
-    }
+    const saveTimeout = setTimeout(async () => {
+      try {
+        const state: ProfilesState = { activeProfileId, profiles };
+        await fetch('/api/profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+      } catch (e) {
+        console.error("Failed to save profiles to server:", e);
+      }
+    }, 500); // Debounce 500ms
+
+    return () => clearTimeout(saveTimeout);
   }, [profiles, activeProfileId, isLoaded]);
+
 
   // --- Profile Management ---
   const updateActiveProfile = (updates: Partial<Profile>) => {
