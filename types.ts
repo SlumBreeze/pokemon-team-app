@@ -92,6 +92,8 @@ export interface MatchupResult {
   message: string;
   mySpeed: number;
   enemySpeed: number;
+  catchScore?: number;
+  catchMoves?: string[];
 }
 
 // Profile System Types

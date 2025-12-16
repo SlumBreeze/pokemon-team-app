@@ -41,17 +41,17 @@ const PokedexView: React.FC<PokedexViewProps> = ({ caughtPokemon, onToggleCaught
 
         <div className="flex gap-4 w-full md:w-auto">
           <div className="relative flex-grow md:flex-grow-0">
-             <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
-             <input 
-               type="text" 
-               placeholder="Search Pokedex..." 
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-               className="bg-dark border border-gray-600 rounded-full pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-violet-500 w-full"
-             />
+            <Search className="absolute left-3 top-2.5 text-gray-500" size={16} />
+            <input
+              type="text"
+              placeholder="Search Pokedex..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-dark border border-gray-600 rounded-full pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-violet-500 w-full"
+            />
           </div>
-          
-          <button 
+
+          <button
             onClick={onAutoBuild}
             disabled={isBuilding || totalCaught === 0}
             className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold shadow-lg transition-all ${isBuilding || totalCaught === 0 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white active:scale-95'}`}
@@ -74,36 +74,39 @@ const PokedexView: React.FC<PokedexViewProps> = ({ caughtPokemon, onToggleCaught
               <button
                 key={p.name}
                 onClick={() => onToggleCaught(p.name)}
-                className={`group relative rounded-lg p-2 flex flex-col items-center gap-2 transition-all duration-200 border ${
-                  isCaught 
-                    ? 'bg-violet-900/30 border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.3)]' 
+                className={`group relative rounded-lg p-2 flex flex-col items-center gap-2 transition-all duration-200 border ${isCaught
+                    ? 'bg-violet-900/30 border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.3)]'
                     : 'bg-card/50 border-gray-800 hover:border-gray-600 hover:bg-card opacity-70 hover:opacity-100'
-                }`}
+                  }`}
               >
-                 <div className="absolute top-1 right-1">
-                   {isCaught && <CheckCircle size={14} className="text-green-400 bg-black rounded-full" />}
-                 </div>
-                 <div className="text-[10px] text-gray-500 font-mono absolute top-1 left-2">#{String(p.id).padStart(3, '0')}</div>
-                 
-                 <div className="w-16 h-16 mt-2 flex items-center justify-center">
-                    <img 
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
-                      alt={p.name}
-                      className={`w-full h-full object-contain transition-all ${isCaught ? 'filter-none scale-110' : 'grayscale group-hover:grayscale-0'}`}
-                      loading="lazy"
-                    />
-                 </div>
-                 <span className="text-[10px] capitalize font-bold text-center truncate w-full">
-                    {p.name.replace(/-/g, ' ')}
-                 </span>
+                <div className="absolute top-1 right-1">
+                  {isCaught && <CheckCircle size={14} className="text-green-400 bg-black rounded-full" />}
+                </div>
+                <div className="text-[10px] text-gray-500 font-mono absolute top-1 left-2">#{String(p.id).padStart(3, '0')}</div>
+
+                <div className="w-16 h-16 mt-2 flex items-center justify-center">
+                  <img
+                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                    alt={p.name}
+                    className={`w-full h-full object-contain transition-all ${isCaught ? 'filter-none scale-110' : 'grayscale group-hover:grayscale-0'}`}
+                    loading="lazy"
+                  />
+                </div>
+                <span className="text-[10px] capitalize font-bold text-center truncate w-full">
+                  {p.name.replace(/-/g, ' ')}
+                </span>
               </button>
             );
           })}
         </div>
       )}
-      
+
+      {!loading && filtered.length > 150 && (
+        <div className="text-center py-2 text-gray-500 text-sm">Showing 150 of {filtered.length} results. Refine your search to see more.</div>
+      )}
+
       {!loading && filtered.length === 0 && (
-         <div className="text-center py-10 text-gray-500">No Pokemon found.</div>
+        <div className="text-center py-10 text-gray-500">No Pokemon found.</div>
       )}
     </div>
   );

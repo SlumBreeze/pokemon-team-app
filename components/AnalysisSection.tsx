@@ -211,7 +211,8 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team, onBossSelect, c
         highestOffense = maxMultiplier;
         bestOffId = member.id;
       } else if (maxMultiplier === highestOffense && speedDiff > 0) {
-        // Tie breaker: Speed
+        // Tie breaker: Prefer faster Pokemon when offense is equal
+        bestOffId = member.id;
       }
 
       if (catchInfo.score > highestCatchScore) {
@@ -388,8 +389,8 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({ team, onBossSelect, c
                 <button
                   onClick={() => onToggleCaught(enemyData.name)}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${isCaught
-                      ? 'bg-green-600 hover:bg-green-500 text-white border border-green-400'
-                      : 'bg-white hover:bg-gray-200 text-red-600 border border-red-500'
+                    ? 'bg-green-600 hover:bg-green-500 text-white border border-green-400'
+                    : 'bg-white hover:bg-gray-200 text-red-600 border border-red-500'
                     }`}
                   title={isCaught ? "Remove from Pokedex" : "Add to Pokedex"}
                 >

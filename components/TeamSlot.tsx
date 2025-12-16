@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TeamMember, TypeName } from '../types';
 import { TYPE_NAMES, TYPE_COLORS } from '../constants';
-import { AlertCircle, X, Sparkles, ShoppingBag, Info, ArrowRight, CheckCircle, ArrowUpCircle, Lock, Unlock } from 'lucide-react';
+import { AlertCircle, X, Sparkles, ShoppingBag, ArrowRight, CheckCircle, ArrowUpCircle, Lock, Unlock } from 'lucide-react';
 import { fetchPokemon, fetchAbilityDescription, fetchEvolutionInfo, getPokemonNames, getItemNames, fetchItemDescription } from '../services/pokeApi';
 import AutocompleteInput from './AutocompleteInput';
 import { getRecommendedItems, RecommendedItem } from '../itemRecommendations';
@@ -19,7 +19,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
   const [itemInputValue, setItemInputValue] = useState(member.heldItem || '');
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
   const [previewItemDesc, setPreviewItemDesc] = useState<string | null>(null);
-  
+
   useEffect(() => {
     setInputValue(member.customName);
   }, [member.customName]);
@@ -31,10 +31,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
   // Update recommendations whenever data or evolution details change
   useEffect(() => {
     if (member.data) {
-        const recs = getRecommendedItems(member.data, member.evolutionDetails);
-        setRecommendations(recs);
+      const recs = getRecommendedItems(member.data, member.evolutionDetails);
+      setRecommendations(recs);
     } else {
-        setRecommendations([]);
+      setRecommendations([]);
     }
   }, [member.data, member.evolutionDetails]);
 
@@ -48,7 +48,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
 
     try {
       const data = await fetchPokemon(nameToSearch);
-      
+
       const defaultAbilityName = data.abilities[0]?.ability.name || '';
       let desc = '';
       if (defaultAbilityName) {
@@ -57,7 +57,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
       }
 
       const evoInfo = await fetchEvolutionInfo(data.speciesUrl, data.name);
-      
+
       onUpdate(index, {
         loading: false,
         data: data,
@@ -67,7 +67,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
         error: null,
         customName: '',
         evolutionDetails: evoInfo,
-        heldItem: '', 
+        heldItem: '',
         heldItemDescription: ''
       });
       setInputValue('');
@@ -83,7 +83,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
 
   const handleItemSelect = async (itemName?: string) => {
     const itemToSet = itemName || itemInputValue;
-    if(!itemToSet) return;
+    if (!itemToSet) return;
 
     onUpdate(index, { heldItem: itemToSet });
     const desc = await fetchItemDescription(itemToSet);
@@ -91,12 +91,12 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
   };
 
   const handleRecommendationHover = async (itemName: string | null) => {
-     if (!itemName) {
-         setPreviewItemDesc(null);
-         return;
-     }
-     const desc = await fetchItemDescription(itemName);
-     setPreviewItemDesc(desc);
+    if (!itemName) {
+      setPreviewItemDesc(null);
+      return;
+    }
+    const desc = await fetchItemDescription(itemName);
+    setPreviewItemDesc(desc);
   };
 
   const clearSlot = () => {
@@ -107,82 +107,82 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
 
   // Evolution Status Renderer
   const renderEvolutionStatus = () => {
-      const evo = member.evolutionDetails;
-      if (!evo) return null;
+    const evo = member.evolutionDetails;
+    if (!evo) return null;
 
-      if (evo.isFullyEvolved) {
-          return (
-             <div className="text-[10px] text-green-400 bg-green-900/10 border border-green-800/30 rounded px-2 py-1 flex items-center gap-1.5">
-                 <CheckCircle size={10} />
-                 <span>Fully Evolved</span>
-             </div>
-          );
-      }
-
-      // Check level evolution
-      if (evo.minLevel) {
-          if (member.level >= evo.minLevel) {
-              return (
-                <div className="text-[10px] text-green-300 bg-green-900/30 border border-green-500 rounded px-2 py-1 flex items-center gap-1.5 animate-pulse">
-                    <ArrowUpCircle size={10} />
-                    <span className="font-bold">Evolve Now! (Lv {evo.minLevel})</span>
-                </div>
-              );
-          } else {
-             return (
-                <div className="text-[10px] text-yellow-500 bg-yellow-900/10 border border-yellow-800/30 rounded px-2 py-1 flex items-center gap-1.5">
-                    <ArrowRight size={10} />
-                    <span>Evolves at Lv. {evo.minLevel}</span>
-                    <span className="text-gray-500">({evo.nextEvolutionName})</span>
-                </div>
-             );
-          }
-      }
-
-      // Other conditions
+    if (evo.isFullyEvolved) {
       return (
-        <div className="text-[10px] text-blue-400 bg-blue-900/10 border border-blue-800/30 rounded px-2 py-1 flex items-center gap-1.5">
-            <Sparkles size={10} />
-            <span className="capitalize">{evo.triggerCondition}</span>
-            <span className="text-gray-500">({evo.nextEvolutionName})</span>
+        <div className="text-[10px] text-green-400 bg-green-900/10 border border-green-800/30 rounded px-2 py-1 flex items-center gap-1.5">
+          <CheckCircle size={10} />
+          <span>Fully Evolved</span>
         </div>
       );
+    }
+
+    // Check level evolution
+    if (evo.minLevel) {
+      if (member.level >= evo.minLevel) {
+        return (
+          <div className="text-[10px] text-green-300 bg-green-900/30 border border-green-500 rounded px-2 py-1 flex items-center gap-1.5 animate-pulse">
+            <ArrowUpCircle size={10} />
+            <span className="font-bold">Evolve Now! (Lv {evo.minLevel})</span>
+          </div>
+        );
+      } else {
+        return (
+          <div className="text-[10px] text-yellow-500 bg-yellow-900/10 border border-yellow-800/30 rounded px-2 py-1 flex items-center gap-1.5">
+            <ArrowRight size={10} />
+            <span>Evolves at Lv. {evo.minLevel}</span>
+            <span className="text-gray-500">({evo.nextEvolutionName})</span>
+          </div>
+        );
+      }
+    }
+
+    // Other conditions
+    return (
+      <div className="text-[10px] text-blue-400 bg-blue-900/10 border border-blue-800/30 rounded px-2 py-1 flex items-center gap-1.5">
+        <Sparkles size={10} />
+        <span className="capitalize">{evo.triggerCondition}</span>
+        <span className="text-gray-500">({evo.nextEvolutionName})</span>
+      </div>
+    );
   };
 
   return (
     <div className={`bg-card border ${member.locked ? 'border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.1)]' : 'border-gray-700'} rounded-lg p-4 flex flex-col gap-3 relative shadow-lg hover:shadow-xl transition-all duration-300 min-h-[220px]`}>
       <div className="flex justify-between items-center text-gray-400 text-xs font-bold uppercase tracking-wider">
         <span className="flex items-center gap-2">
-            Slot {index + 1}
-            {member.locked && <Lock size={12} className="text-amber-500" />}
+          Slot {index + 1}
+          {member.locked && <Lock size={12} className="text-amber-500" />}
         </span>
         <div className="flex items-center gap-2">
-            {member.data && (
-                <button 
-                  onClick={() => onToggleLock(index)} 
-                  className={`transition-colors ${member.locked ? 'text-amber-500 hover:text-amber-400' : 'text-gray-600 hover:text-gray-400'}`} 
-                  title={member.locked ? "Unlock Slot" : "Lock Slot (Keep during Auto-Build)"}
-                >
-                  {member.locked ? <Lock size={14} /> : <Unlock size={14} />}
-                </button>
-            )}
-            {member.data && !member.locked && (
-                <button onClick={clearSlot} className="text-red-400 hover:text-red-300 transition-colors" title="Clear Slot">
-                    <X size={14} />
-                </button>
-            )}
+          {member.data && (
+            <button
+              onClick={() => onToggleLock(index)}
+              className={`transition-colors ${member.locked ? 'text-amber-500 hover:text-amber-400' : 'text-gray-600 hover:text-gray-400'}`}
+              title={member.locked ? "Unlock Slot" : "Lock Slot (Keep during Auto-Build)"}
+            >
+              {member.locked ? <Lock size={14} /> : <Unlock size={14} />}
+            </button>
+          )}
+          {member.data && !member.locked && (
+            <button onClick={clearSlot} className="text-red-400 hover:text-red-300 transition-colors" title="Clear Slot">
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="relative z-10">
-        <AutocompleteInput 
+        <AutocompleteInput
           value={inputValue}
           onChange={setInputValue}
           onSubmit={handleSearch}
           fetchData={getPokemonNames}
           placeholder={member.data ? "Replace..." : "Enter Pokémon..."}
           isLoading={member.loading}
-          onBlur={() => { if(inputValue && inputValue !== member.customName && !member.data) handleSearch() }}
+          onBlur={() => { if (inputValue && inputValue !== member.customName && !member.data) handleSearch() }}
         />
       </div>
 
@@ -198,9 +198,9 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
           {/* Header Info */}
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 flex-shrink-0 bg-dark/50 rounded-full flex items-center justify-center border border-gray-700 relative">
-              <img 
-                src={member.data.sprites.other?.["official-artwork"].front_default || member.data.sprites.front_default} 
-                alt={member.data.name} 
+              <img
+                src={member.data.sprites.other?.["official-artwork"].front_default || member.data.sprites.front_default}
+                alt={member.data.name}
                 className="w-14 h-14 object-contain"
               />
             </div>
@@ -208,24 +208,24 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
               <div className="font-bold text-lg capitalize truncate leading-tight flex justify-between items-center">
                 {member.data.name}
                 <div className="flex items-center bg-dark/50 rounded px-1.5 border border-gray-700 h-6">
-                    <span className="text-[10px] text-gray-400 mr-1">Lv.</span>
-                    <select 
-                      value={member.level}
-                      onChange={(e) => onUpdate(index, { level: parseInt(e.target.value) })}
-                      className="bg-transparent text-xs font-mono focus:outline-none text-white cursor-pointer w-10 text-right appearance-none"
-                    >
-                      {Array.from({ length: 100 }, (_, i) => 100 - i).map(lvl => (
-                        <option key={lvl} value={lvl} className="bg-dark text-white">
-                          {lvl}
-                        </option>
-                      ))}
-                    </select>
+                  <span className="text-[10px] text-gray-400 mr-1">Lv.</span>
+                  <select
+                    value={member.level}
+                    onChange={(e) => onUpdate(index, { level: parseInt(e.target.value) })}
+                    className="bg-transparent text-xs font-mono focus:outline-none text-white cursor-pointer w-10 text-right appearance-none"
+                  >
+                    {Array.from({ length: 100 }, (_, i) => 100 - i).map(lvl => (
+                      <option key={lvl} value={lvl} className="bg-dark text-white">
+                        {lvl}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="flex gap-1 flex-wrap mt-0.5">
                 {member.data.types.map(t => (
-                  <span 
-                    key={t.type.name} 
+                  <span
+                    key={t.type.name}
                     className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white shadow-sm uppercase tracking-wide"
                     style={{ backgroundColor: TYPE_COLORS[t.type.name] || '#777' }}
                   >
@@ -235,7 +235,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
               </div>
             </div>
           </div>
-          
+
           {/* Evolution Hint */}
           {renderEvolutionStatus()}
 
@@ -243,12 +243,12 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
           <div className="grid grid-cols-2 gap-2 items-start">
             <div className="flex flex-col">
               <label className="block text-[10px] text-gray-500 uppercase mb-1">Ability</label>
-              <select 
+              <select
                 value={member.selectedAbility}
                 onChange={async (e) => {
                   const newAbility = e.target.value;
                   onUpdate(index, { selectedAbility: newAbility, abilityDescription: 'Loading...' });
-                  
+
                   const abilityData = member.data?.abilities.find(a => a.ability.name === newAbility);
                   if (abilityData) {
                     const desc = await fetchAbilityDescription(abilityData.ability.url);
@@ -267,7 +267,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
 
             <div>
               <label className="block text-[10px] text-gray-500 uppercase mb-1">Tera Type</label>
-              <select 
+              <select
                 value={member.teraType}
                 onChange={(e) => onUpdate(index, { teraType: e.target.value })}
                 className="w-full bg-dark/50 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-scarlet-500 capitalize"
@@ -285,52 +285,52 @@ const TeamSlot: React.FC<TeamSlotProps> = ({ index, member, onUpdate, onClear, o
           <div>
             <label className="block text-[10px] text-gray-500 uppercase mb-1">Held Item</label>
             <div className="relative z-0">
-                <AutocompleteInput 
-                    value={itemInputValue}
-                    onChange={setItemInputValue}
-                    onSubmit={handleItemSelect}
-                    fetchData={getItemNames}
-                    placeholder="Search Item..."
-                    onBlur={() => handleItemSelect(itemInputValue)}
-                />
+              <AutocompleteInput
+                value={itemInputValue}
+                onChange={setItemInputValue}
+                onSubmit={handleItemSelect}
+                fetchData={getItemNames}
+                placeholder="Search Item..."
+                onBlur={() => handleItemSelect(itemInputValue)}
+              />
             </div>
-            
+
             {/* Description Box (Shows Selected Item OR Hover Preview) */}
             <div className="mt-1 min-h-[30px] bg-dark/30 border border-gray-800 rounded px-2 py-1.5">
-                {previewItemDesc ? (
-                    <p className="text-[10px] text-violet-300 animate-in fade-in leading-snug">
-                       <strong className="text-violet-400">Preview:</strong> {previewItemDesc}
-                    </p>
-                ) : member.heldItemDescription ? (
-                    <p className="text-[10px] text-gray-400 leading-snug">{member.heldItemDescription}</p>
-                ) : (
-                    <p className="text-[10px] text-gray-600 italic">No item selected</p>
-                )}
+              {previewItemDesc ? (
+                <p className="text-[10px] text-violet-300 animate-in fade-in leading-snug">
+                  <strong className="text-violet-400">Preview:</strong> {previewItemDesc}
+                </p>
+              ) : member.heldItemDescription ? (
+                <p className="text-[10px] text-gray-400 leading-snug">{member.heldItemDescription}</p>
+              ) : (
+                <p className="text-[10px] text-gray-600 italic">No item selected</p>
+              )}
             </div>
           </div>
 
           {/* Item Recommendations */}
           {recommendations.length > 0 && (
-             <div className="mt-1">
-                 <div className="flex items-center gap-1 text-[10px] text-gray-500 uppercase font-bold mb-1">
-                    <ShoppingBag size={10} />
-                    Recommended
-                 </div>
-                 <div className="flex flex-wrap gap-1">
-                    {recommendations.map(item => (
-                        <button 
-                            key={item.name} 
-                            onClick={() => handleItemSelect(item.name)}
-                            onMouseEnter={() => handleRecommendationHover(item.name)}
-                            onMouseLeave={() => handleRecommendationHover(null)}
-                            className="px-1.5 py-0.5 bg-dark border border-gray-600 hover:bg-gray-700 hover:border-gray-500 rounded flex items-center gap-1.5 transition-colors group text-left"
-                        >
-                            <span className="text-[10px] font-bold text-gray-300 group-hover:text-white transition-colors">{item.name}</span>
-                            <span className="text-[9px] text-gray-500 group-hover:text-gray-400 hidden sm:inline-block">({item.reason})</span>
-                        </button>
-                    ))}
-                 </div>
-             </div>
+            <div className="mt-1">
+              <div className="flex items-center gap-1 text-[10px] text-gray-500 uppercase font-bold mb-1">
+                <ShoppingBag size={10} />
+                Recommended
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {recommendations.map(item => (
+                  <button
+                    key={item.name}
+                    onClick={() => handleItemSelect(item.name)}
+                    onMouseEnter={() => handleRecommendationHover(item.name)}
+                    onMouseLeave={() => handleRecommendationHover(null)}
+                    className="px-1.5 py-0.5 bg-dark border border-gray-600 hover:bg-gray-700 hover:border-gray-500 rounded flex items-center gap-1.5 transition-colors group text-left"
+                  >
+                    <span className="text-[10px] font-bold text-gray-300 group-hover:text-white transition-colors">{item.name}</span>
+                    <span className="text-[9px] text-gray-500 group-hover:text-gray-400 hidden sm:inline-block">({item.reason})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
         </div>
