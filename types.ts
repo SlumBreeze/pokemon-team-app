@@ -77,9 +77,9 @@ export interface Boss {
   tera: string; // TypeName
 }
 
-export type TypeName = 
-  | 'normal' | 'fire' | 'water' | 'electric' | 'grass' | 'ice' 
-  | 'fighting' | 'poison' | 'ground' | 'flying' | 'psychic' | 'bug' 
+export type TypeName =
+  | 'normal' | 'fire' | 'water' | 'electric' | 'grass' | 'ice'
+  | 'fighting' | 'poison' | 'ground' | 'flying' | 'psychic' | 'bug'
   | 'rock' | 'ghost' | 'dragon' | 'steel' | 'dark' | 'fairy';
 
 export interface MatchupResult {
@@ -92,4 +92,18 @@ export interface MatchupResult {
   message: string;
   mySpeed: number;
   enemySpeed: number;
+}
+
+// Profile System Types
+export interface Profile {
+  id: string;
+  name: string;
+  team: TeamMember[];
+  caughtPokemon: string[];
+  lastUpdated: number;
+}
+
+export interface ProfilesState {
+  activeProfileId: string;
+  profiles: Record<string, Profile>;
 }
