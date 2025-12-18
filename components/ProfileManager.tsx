@@ -19,6 +19,7 @@ interface ProfileManagerProps {
   onRenameProfile: (profileId: string, newName: string) => void;
   onDeleteProfile: (profileId: string) => void;
   onDuplicateProfile: (profileId: string) => void;
+  globalCaughtPokemon: string[];
 }
 
 const ProfileManager: React.FC<ProfileManagerProps> = ({
@@ -29,6 +30,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
   onRenameProfile,
   onDeleteProfile,
   onDuplicateProfile,
+  globalCaughtPokemon,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -112,26 +114,26 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
       {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-black/30 hover:bg-black/50 border border-pink-400/30 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 border-2 border-black rounded-full transition-all shadow-sm active:scale-95"
       >
-        <User size={16} className="text-pink-300" />
-        <span className="text-white text-sm font-medium max-w-[120px] truncate">
+        <User size={16} className="text-scarlet" />
+        <span className="text-black text-sm font-black max-w-[120px] truncate uppercase tracking-tighter">
           {activeProfile?.name || "Profile"}
         </span>
         <ChevronDown
           size={14}
-          className={`text-pink-300 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`text-black transition-transform ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
-          <div className="p-2 border-b border-gray-700">
-            <span className="text-[10px] text-gray-500 uppercase font-bold">
-              Profiles
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white border-2 border-black rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="px-4 py-3 border-b-2 border-black bg-gray-50">
+            <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">
+              Available Sessions
+              <span className="float-right text-scarlet">{globalCaughtPokemon.length} Caught</span>
             </span>
           </div>
 
@@ -145,11 +147,10 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                     setIsOpen(false);
                   }
                 }}
-                className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors ${
-                  profile.id === activeProfileId
-                    ? "bg-pink-600/20 border-l-2 border-pink-500"
-                    : "hover:bg-gray-800 border-l-2 border-transparent"
-                }`}
+                className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-all ${profile.id === activeProfileId
+                  ? "bg-scarlet text-white font-black"
+                  : "hover:bg-gray-50 text-black border-b border-gray-100"
+                  }`}
               >
                 {isRenaming === profile.id ? (
                   <div
@@ -165,7 +166,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                         if (e.key === "Enter") handleRename(profile.id);
                         if (e.key === "Escape") setIsRenaming(null);
                       }}
-                      className="flex-grow bg-gray-800 text-white text-sm px-2 py-1 rounded border border-gray-600 focus:outline-none focus:border-pink-500"
+                      className="flex-grow bg-white text-black text-sm px-2 py-1.5 rounded-lg border-2 border-black focus:outline-none"
                     />
                     <button
                       onClick={() => handleRename(profile.id)}
@@ -183,10 +184,9 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                 ) : (
                   <>
                     <div className="flex-grow">
-                      <span className="text-white text-sm">{profile.name}</span>
-                      <div className="text-[10px] text-gray-500">
-                        {profile.team.filter((m) => m.data).length} Pokémon •{" "}
-                        {profile.caughtPokemon.length} caught
+                      <span className={`text-sm ${profile.id === activeProfileId ? 'text-white' : 'text-black font-bold'}`}>{profile.name}</span>
+                      <div className={`text-[10px] ${profile.id === activeProfileId ? 'text-white/70' : 'text-gray-400'} font-bold uppercase tracking-tighter`}>
+                        {profile.team.filter((m) => m.data).length} pkmn
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -194,14 +194,14 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                         onClick={(e) =>
                           startRename(profile.id, profile.name, e)
                         }
-                        className="p-1 text-gray-500 hover:text-white rounded transition-colors"
+                        className={`p-1.5 rounded transition-colors ${profile.id === activeProfileId ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-black hover:bg-gray-100'}`}
                         title="Rename"
                       >
                         <Edit2 size={12} />
                       </button>
                       <button
                         onClick={(e) => handleDelete(profile.id, e)}
-                        className="p-1 text-gray-500 hover:text-red-400 rounded transition-colors"
+                        className={`p-1.5 rounded transition-colors ${profile.id === activeProfileId ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}`}
                         title="Delete"
                       >
                         <Trash2 size={12} />
@@ -211,7 +211,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                           e.stopPropagation();
                           onDuplicateProfile(profile.id);
                         }}
-                        className="p-1 text-gray-500 hover:text-blue-400 rounded transition-colors"
+                        className={`p-1.5 rounded transition-colors ${profile.id === activeProfileId ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'}`}
                         title="Duplicate Profile"
                       >
                         <Copy size={12} />
@@ -224,7 +224,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
           </div>
 
           {/* Create New Profile */}
-          <div className="p-2 border-t border-gray-700">
+          <div className="p-3 bg-gray-50 border-t-2 border-black">
             {isCreating ? (
               <div className="flex items-center gap-2">
                 <input
@@ -237,19 +237,19 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                     if (e.key === "Escape") setIsCreating(false);
                   }}
                   placeholder="Profile name..."
-                  className="flex-grow bg-gray-800 text-white text-sm px-2 py-1.5 rounded border border-gray-600 focus:outline-none focus:border-pink-500"
+                  className="flex-grow bg-white text-black text-sm px-2 py-2 rounded-lg border-2 border-black focus:outline-none"
                 />
                 <button
                   onClick={handleCreate}
-                  className="text-green-400 hover:text-green-300"
+                  className="text-green-600 hover:text-green-500 p-1"
                 >
-                  <Check size={16} />
+                  <Check size={20} />
                 </button>
                 <button
                   onClick={() => setIsCreating(false)}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 hover:text-black p-1"
                 >
-                  <X size={16} />
+                  <X size={20} />
                 </button>
               </div>
             ) : (
@@ -258,10 +258,10 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                   setIsCreating(true);
                   setInputValue("");
                 }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-pink-400 hover:text-pink-300 hover:bg-pink-900/20 rounded transition-colors text-sm font-medium"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-black text-white hover:bg-gray-800 rounded-xl transition-all shadow-md active:scale-95 text-xs font-black uppercase tracking-widest"
               >
                 <Plus size={16} />
-                New Profile
+                New Session
               </button>
             )}
           </div>

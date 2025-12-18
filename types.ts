@@ -43,6 +43,7 @@ export interface PokemonData {
   stats: PokemonStat[];
   abilities: PokemonAbility[];
   speciesUrl: string;
+  location_area_encounters: string;
   moves: MoveInfo[];
 }
 
@@ -117,11 +118,11 @@ export interface Profile {
   id: string;
   name: string;
   team: TeamMember[];
-  caughtPokemon: string[];
   lastUpdated: number;
 }
 
 export interface ProfilesState {
   activeProfileId: string;
   profiles: Record<string, Profile>;
+  globalCaughtPokemon: string[];
 }

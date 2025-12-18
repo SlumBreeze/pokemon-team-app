@@ -174,6 +174,7 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
   const result = {
     ...data,
     speciesUrl: data.species.url,
+    location_area_encounters: data.location_area_encounters,
     moves: moves,
   } as PokemonData;
 
@@ -317,5 +318,45 @@ export const fetchMoveType = async (url: string): Promise<string> => {
     return data.type.name;
   } catch (e) {
     return "normal";
+  }
+};
+
+export const fetchEncounterLocations = async (url: string): Promise<string[]> => {
+  if (!url) return [];
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+
+    // Set for deduplication
+    const locations = new Set<string>();
+
+    data.forEach((encounter: any) => {
+      // Check if this encounter area has details for SV
+      const hasSV = encounter.version_details.some((detail: any) =>
+        detail.version.name === "scarlet" || detail.version.name === "violet"
+      );
+
+      if (hasSV) {
+        // Clean up the name
+        const cleanName = encounter.location_area.name
+          .replace(/-/g, ' ')
+          .replace(/area/gi, 'Area')
+          .replace(/province/gi, 'Province')
+          .replace(/sea/gi, 'Sea')
+          .replace(/path/gi, 'Path')
+          .replace(/passage/gi, 'Passage')
+          .replace(/cavern/gi, 'Cavern');
+
+        locations.add(cleanName);
+      }
+    });
+
+    return Array.from(locations).sort();
+  } catch (e) {
+    console.error("Error fetching encounters:", e);
+    return [];
   }
 };

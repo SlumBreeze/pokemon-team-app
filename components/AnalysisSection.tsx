@@ -17,6 +17,8 @@ import {
   CircleDot,
   Crown,
   CheckCircle,
+  ArrowRight,
+  Lock,
 } from "lucide-react";
 import MoveRecommender from "./MoveRecommender";
 import AutocompleteInput from "./AutocompleteInput";
@@ -313,9 +315,9 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
 
   if (loadingSuggestions) {
     return (
-      <div className="mt-6 bg-amber-900/10 border border-amber-800/30 rounded p-4 flex items-center justify-center gap-2">
-        <Loader2 className="animate-spin text-amber-400" size={20} />
-        <span className="text-amber-400 text-sm">Finding counters...</span>
+      <div className="mt-8 bg-white border-4 border-black rounded-2xl p-8 flex flex-col items-center justify-center gap-4 shadow-xl">
+        <Loader2 className="animate-spin text-scarlet" size={32} />
+        <span className="text-black font-black uppercase tracking-widest text-xs">Finding Best Counters...</span>
       </div>
     );
   }
@@ -325,38 +327,40 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
   }
 
   return (
-    <div className="mt-6 bg-amber-900/10 border border-amber-800/30 rounded p-4">
-      <h3 className="text-amber-400 font-bold uppercase text-xs mb-3 flex items-center gap-2">
-        <Crown size={16} />
-        Suggested Counters from Your Pokédex (vs {targetType})
+    <div className="mt-6 bg-white border-4 border-black rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-2 bg-scarlet"></div>
+      <h3 className="text-black font-black uppercase text-xs mb-4 flex items-center gap-2 tracking-widest">
+        <Crown size={16} className="text-scarlet" />
+        Top Counters from Your Pokédex <span className="text-black/40 font-black ml-2 uppercase">VS {targetType}</span>
       </h3>
       <div className="flex flex-wrap gap-3 mb-4">
         {suggestedCounters.map((p) => (
           <button
             key={p.id}
             onClick={() => setSelectedId(p.id === selectedId ? null : p.id)}
-            className={`bg-card border rounded-lg p-2 flex flex-col items-center gap-1 w-20 transition-all cursor-pointer ${
-              p.id === selectedId
-                ? "border-amber-400 ring-2 ring-amber-400/50 scale-105"
-                : "border-gray-700 hover:border-amber-500"
-            }`}
+            className={`bg-gray-50 border-2 rounded-xl p-2 flex flex-col items-center gap-1 w-24 transition-all cursor-pointer ${p.id === selectedId
+              ? "border-scarlet ring-4 ring-scarlet/10 scale-105 shadow-lg"
+              : "border-black/10 hover:border-black"
+              }`}
           >
-            <img
-              src={
-                p.sprites.other?.["official-artwork"].front_default ||
-                p.sprites.front_default
-              }
-              alt={p.name}
-              className="w-14 h-14 object-contain"
-            />
-            <span className="text-[10px] text-white capitalize text-center truncate w-full font-bold">
+            <div className="p-1 bg-white rounded-full border border-black/5 shadow-inner mb-1">
+              <img
+                src={
+                  p.sprites.other?.["official-artwork"].front_default ||
+                  p.sprites.front_default
+                }
+                alt={p.name}
+                className="w-16 h-16 object-contain"
+              />
+            </div>
+            <span className="text-[10px] text-black capitalize text-center truncate w-full font-black">
               {p.name.replace(/-/g, " ")}
             </span>
             <div className="flex gap-0.5">
               {p.types.map((t) => (
                 <span
                   key={t.type.name}
-                  className="px-1 py-0.5 rounded text-[8px] font-bold text-white uppercase"
+                  className="px-1 py-0.5 rounded text-[7px] font-black text-white uppercase"
                   style={{
                     backgroundColor: TYPE_COLORS[t.type.name] || "#555",
                   }}
@@ -366,7 +370,7 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
               ))}
             </div>
             {(p as any).reason && (
-              <span className="text-[8px] text-amber-400 font-bold mt-1 text-center leading-tight">
+              <span className="text-[9px] text-scarlet font-black mt-2 text-center leading-tight uppercase tracking-tighter">
                 {(p as any).reason}
               </span>
             )}
@@ -376,36 +380,38 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
 
       {/* Selected Pokemon Analysis */}
       {selectedPokemon && analysis && (
-        <div className="bg-card border border-amber-500/50 rounded-lg p-4 animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-4 mb-3">
-            <img
-              src={
-                selectedPokemon.sprites.other?.["official-artwork"]
-                  .front_default || selectedPokemon.sprites.front_default
-              }
-              alt={selectedPokemon.name}
-              className="w-16 h-16 object-contain"
-            />
+        <div className="bg-white border-2 border-black rounded-2xl p-6 animate-in slide-in-from-top-2 shadow-lg mt-4">
+          <div className="flex items-center gap-6 mb-4">
+            <div className="p-2 bg-gray-50 rounded-full border-2 border-black shadow-inner">
+              <img
+                src={
+                  selectedPokemon.sprites.other?.["official-artwork"]
+                    .front_default || selectedPokemon.sprites.front_default
+                }
+                alt={selectedPokemon.name}
+                className="w-20 h-20 object-contain"
+              />
+            </div>
             <div className="flex-grow">
-              <div className="flex items-center gap-2">
-                <h4 className="text-lg font-bold capitalize text-white">
+              <div className="flex items-center gap-3">
+                <h4 className="text-2xl font-black capitalize text-black">
                   {selectedPokemon.name.replace(/-/g, " ")}
                 </h4>
                 {(selectedPokemon as any).reason && (
-                  <span className="px-2 py-0.5 bg-amber-900/30 border border-amber-500/50 rounded text-[10px] text-amber-400 font-bold uppercase">
+                  <span className="px-3 py-1 bg-scarlet rounded-full text-[10px] text-white font-black uppercase tracking-widest shadow-sm">
                     {(selectedPokemon as any).reason}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-400">Your Level:</span>
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs text-gray-400 font-bold uppercase tracking-tight">Your Trainer Level:</span>
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(parseInt(e.target.value))}
-                  className="bg-dark border border-gray-600 rounded px-2 py-1 text-white text-sm"
+                  className="bg-gray-100 border-2 border-black rounded-lg px-3 py-1 text-black text-sm font-bold focus:outline-none focus:ring-2 focus:ring-scarlet/20"
                 >
                   {Array.from({ length: 100 }, (_, i) => 100 - i).map((lvl) => (
-                    <option key={lvl} value={lvl}>
+                    <option key={lvl} value={lvl} className="bg-white text-black">
                       {lvl}
                     </option>
                   ))}
@@ -417,126 +423,117 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
             {/* Speed Check */}
             <div
-              className={`p-2 rounded border ${
-                analysis.isFaster
-                  ? "bg-green-900/20 border-green-700"
-                  : "bg-red-900/20 border-red-700"
-              }`}
+              className={`p-3 rounded-xl border-2 ${analysis.isFaster
+                ? "bg-green-50 border-green-200"
+                : "bg-red-50 border-red-200"
+                } shadow-sm`}
             >
-              <div className="text-[10px] text-gray-400 uppercase mb-1">
+              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest">
                 Speed
               </div>
               <div
-                className={`font-bold ${
-                  analysis.isFaster ? "text-green-400" : "text-red-400"
-                }`}
+                className={`font-black text-sm uppercase tracking-tighter ${analysis.isFaster ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {analysis.isFaster ? (
-                  <span className="flex items-center gap-1">
-                    <ArrowUpCircle size={14} /> Faster ({analysis.mySpeed})
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <ArrowUpCircle size={16} /> Faster ({analysis.mySpeed})
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1">
-                    <ArrowDownCircle size={14} /> Slower ({analysis.mySpeed})
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <ArrowDownCircle size={16} /> Slower ({analysis.mySpeed})
                   </span>
                 )}
               </div>
-              <div className="text-[10px] text-gray-500">
+              <div className="text-[10px] text-gray-400 font-bold mt-1">
                 Enemy: {enemySpeed}
               </div>
             </div>
 
             {/* Effectiveness */}
             <div
-              className={`p-2 rounded border ${
-                analysis.isStillEffective
-                  ? "bg-green-900/20 border-green-700"
-                  : "bg-yellow-900/20 border-yellow-700"
-              }`}
+              className={`p-3 rounded-xl border-2 ${analysis.isStillEffective
+                ? "bg-green-50 border-green-200"
+                : "bg-yellow-50 border-yellow-200"
+                } shadow-sm`}
             >
-              <div className="text-[10px] text-gray-400 uppercase mb-1">
+              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest">
                 Offense
               </div>
               <div
-                className={`font-bold ${
-                  analysis.isStillEffective
-                    ? "text-green-400"
-                    : "text-yellow-400"
-                }`}
+                className={`font-black text-sm uppercase tracking-tighter ${analysis.isStillEffective
+                  ? "text-green-600"
+                  : "text-yellow-600"
+                  }`}
               >
                 {analysis.bestMult >= 4
                   ? "4x Super Effective!"
                   : analysis.bestMult >= 2
-                  ? "2x Super Effective"
-                  : "Neutral Damage"}
+                    ? "2x Super Effective"
+                    : "Neutral Damage"}
               </div>
             </div>
 
             {/* Defense Check */}
             <div
-              className={`p-2 rounded border ${
-                analysis.isImmune || analysis.isResistant
-                  ? "bg-green-900/20 border-green-700"
-                  : analysis.defenseMult >= 2
-                  ? "bg-red-900/20 border-red-700"
-                  : "bg-gray-900/20 border-gray-700"
-              }`}
+              className={`p-3 rounded-xl border-2 ${analysis.isImmune || analysis.isResistant
+                ? "bg-green-50 border-green-200"
+                : analysis.defenseMult >= 2
+                  ? "bg-red-50 border-red-200"
+                  : "bg-gray-50 border-gray-200"
+                } shadow-sm`}
             >
-              <div className="text-[10px] text-gray-400 uppercase mb-1">
+              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest">
                 Defense
               </div>
               <div
-                className={`font-bold ${
-                  analysis.isImmune || analysis.isResistant
-                    ? "text-green-400"
-                    : analysis.defenseMult >= 2
-                    ? "text-red-400"
-                    : "text-gray-300"
-                }`}
+                className={`font-black text-sm uppercase tracking-tighter ${analysis.isImmune || analysis.isResistant
+                  ? "text-green-600"
+                  : analysis.defenseMult >= 2
+                    ? "text-red-600"
+                    : "text-gray-400"
+                  }`}
               >
                 {analysis.isImmune
                   ? "Immune (0x)"
                   : analysis.isResistant
-                  ? `Resistant (${analysis.defenseMult}x)`
-                  : analysis.defenseMult >= 2
-                  ? `Weak (${analysis.defenseMult}x)`
-                  : "Neutral"}
+                    ? `Resistant (${analysis.defenseMult}x)`
+                    : analysis.defenseMult >= 2
+                      ? `Weak (${analysis.defenseMult}x)`
+                      : "Neutral"}
               </div>
             </div>
 
             {/* Level Check */}
             <div
-              className={`p-2 rounded border col-span-2 md:col-span-3 ${
-                analysis.levelAdvantage
-                  ? "bg-green-900/20 border-green-700"
-                  : "bg-orange-900/20 border-orange-700"
-              }`}
+              className={`p-3 rounded-xl border-2 col-span-2 md:col-span-3 ${analysis.levelAdvantage
+                ? "bg-green-50 border-green-200"
+                : "bg-orange-50 border-orange-200"
+                } shadow-sm`}
             >
-              <div className="text-[10px] text-gray-400 uppercase mb-1">
+              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest text-center md:text-left">
                 Level Comparison
               </div>
               <div
-                className={`font-bold ${
-                  analysis.levelAdvantage ? "text-green-400" : "text-orange-400"
-                }`}
+                className={`font-black uppercase tracking-tighter text-sm text-center md:text-left ${analysis.levelAdvantage ? "text-green-600" : "text-orange-600"
+                  }`}
               >
                 {analysis.levelAdvantage
                   ? `Level ${selectedLevel} (Over boss lvl ${enemyLevel})`
-                  : `Needs +${
-                      enemyLevel - selectedLevel
-                    } levels (Target: ${enemyLevel})`}
+                  : `Needs +${enemyLevel - selectedLevel
+                  } levels (Target: ${enemyLevel})`}
               </div>
             </div>
           </div>
 
           {/* Verdict */}
           <div
-            className={`mt-3 p-2 rounded text-center font-bold flex items-center justify-center gap-2 ${verdict.color}`}
+            className={`mt-4 p-4 rounded-2xl text-center font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg border-2 border-black/10 ${verdict.color}`}
           >
             {verdict.icon}
-            <div className="flex flex-col">
-              <span>{verdict.label}</span>
-              <span className="text-[10px] opacity-80 font-normal">
+            <div className="flex flex-col text-left">
+              <span className="text-sm">{verdict.label}</span>
+              <span className="text-[10px] opacity-90 font-bold tracking-tight">
                 {verdict.message}
               </span>
             </div>
@@ -544,40 +541,40 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
 
           {/* Replacement Suggestion */}
           {replacementSuggestion && replacementSuggestion.data && (
-            <div className="mt-3 p-3 bg-violet-900/20 border border-violet-700 rounded">
-              <div className="text-[10px] text-violet-300 uppercase font-bold mb-2 flex items-center gap-1">
-                <ArrowDownCircle size={12} /> Suggested Replacement
+            <div className="mt-4 p-4 bg-gray-50 border-2 border-black/10 rounded-2xl shadow-inner">
+              <div className="text-[10px] text-gray-400 uppercase font-black mb-3 flex items-center gap-1.5 tracking-widest">
+                <ArrowDownCircle size={14} className="text-scarlet" /> Suggested Replacement
               </div>
-              <div className="flex items-center gap-3">
-                <img
-                  src={
-                    replacementSuggestion.data.sprites.other?.[
-                      "official-artwork"
-                    ].front_default ||
-                    replacementSuggestion.data.sprites.front_default
-                  }
-                  alt={replacementSuggestion.data.name}
-                  className="w-10 h-10 object-contain opacity-50"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white capitalize font-bold">
-                      Replace:{" "}
-                      {replacementSuggestion.data.name.replace(/-/g, " ")}
-                    </span>
+              <div className="flex items-center gap-4">
+                <div className="bg-white p-1 rounded-full border-2 border-black/5 shadow-sm">
+                  <img
+                    src={
+                      replacementSuggestion.data.sprites.other?.[
+                        "official-artwork"
+                      ].front_default ||
+                      replacementSuggestion.data.sprites.front_default
+                    }
+                    alt={replacementSuggestion.data.name}
+                    className="w-12 h-12 object-contain grayscale opacity-60"
+                  />
+                </div>
+                <div className="flex-grow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-black capitalize font-black text-sm">
+                        Replace: {replacementSuggestion.data.name.replace(/-/g, " ")}
+                      </span>
+                      <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                        Slot {team.findIndex((m) => m.id === replacementSuggestion.id) + 1}
+                      </div>
+                    </div>
                     {replacementSuggestion.locked && (
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-700 text-gray-400 rounded text-[9px] font-bold uppercase border border-gray-600">
-                        <ShieldAlert size={10} /> Locked
+                      <span className="flex items-center gap-1 px-2 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md">
+                        <Lock size={10} /> Locked
                       </span>
                     )}
                   </div>
-                  <span className="text-gray-400 text-xs ml-2">
-                    (Slot{" "}
-                    {team.findIndex((m) => m.id === replacementSuggestion.id) +
-                      1}
-                    )
-                  </span>
-                  <div className="text-[10px] text-gray-500">
+                  <div className="text-[10px] text-scarlet font-black uppercase tracking-tighter mt-1">
                     Worst matchup vs {targetType}
                   </div>
                 </div>
@@ -587,30 +584,33 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
 
           {/* Next Best Alternative */}
           {nextBest && (
-            <div className="mt-3 p-3 bg-blue-900/20 border border-blue-700 rounded">
-              <div className="text-[10px] text-blue-300 uppercase font-bold mb-2 flex items-center gap-1">
-                <Crown size={12} /> Next Best Alternative (Higher Level)
+            <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-2xl overflow-hidden shadow-md">
+              <div className="px-4 py-2.5 bg-blue-100/50 text-[10px] text-blue-700 uppercase font-black flex items-center gap-1.5 tracking-widest border-b border-blue-200">
+                <Crown size={14} className="text-amber-500" /> Next Best Alternative
               </div>
               <button
                 onClick={() => setSelectedId(nextBest.id)}
-                className="flex items-center gap-3 hover:bg-blue-900/30 rounded p-1 -m-1 transition-colors w-full text-left"
+                className="flex items-center gap-4 p-4 hover:bg-white transition-all w-full text-left group"
               >
-                <img
-                  src={
-                    nextBest.sprites.other?.["official-artwork"]
-                      .front_default || nextBest.sprites.front_default
-                  }
-                  alt={nextBest.name}
-                  className="w-10 h-10 object-contain"
-                />
+                <div className="bg-white p-1 rounded-full border-2 border-blue-100 shadow-sm group-hover:scale-110 transition-transform">
+                  <img
+                    src={
+                      nextBest.sprites.other?.["official-artwork"]
+                        .front_default || nextBest.sprites.front_default
+                    }
+                    alt={nextBest.name}
+                    className="w-12 h-12 object-contain"
+                  />
+                </div>
                 <div>
-                  <span className="text-white capitalize font-bold">
+                  <div className="text-blue-900 capitalize font-black text-sm group-hover:text-blue-700 transition-colors">
                     Try: {nextBest.name.replace(/-/g, " ")}
-                  </span>
-                  <div className="text-[10px] text-gray-400">
-                    Click to analyze
+                  </div>
+                  <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-0.5">
+                    Strong Offensive Counter
                   </div>
                 </div>
+                <ArrowRight size={16} className="ml-auto text-blue-300 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           )}
@@ -876,9 +876,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         };
       })
       .filter(Boolean) as (MatchupResult & {
-      catchScore: number;
-      catchMoves: string[];
-    })[];
+        catchScore: number;
+        catchMoves: string[];
+      })[];
 
     return {
       matchups: results,
@@ -916,25 +916,30 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   const isCaught = enemyData ? caughtPokemon.includes(enemyData.name) : false;
 
   return (
-    <div className="mt-8 bg-[#222] border-t-4 border-scarlet-600 rounded-lg p-6 shadow-2xl">
-      <h2 className="text-2xl font-bold uppercase tracking-widest text-white mb-6 flex items-center gap-3">
-        <Sword className="text-scarlet-500" />
-        Combat Analysis
+    <div className="mt-12 bg-white border-4 border-black rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-scarlet rounded-bl-full opacity-10 pointer-events-none"></div>
+
+      <h2 className="text-3xl font-black uppercase tracking-tighter text-black mb-8 flex items-center gap-3">
+        <div className="w-8 h-8 bg-scarlet border-4 border-black rounded-full flex items-center justify-center relative shadow-md">
+          <div className="w-2 h-2 bg-white border-2 border-black rounded-full z-10"></div>
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-black opacity-20 rounded-t-full"></div>
+        </div>
+        Combat Analyzer
       </h2>
 
       {/* Control Panel */}
-      <div className="flex flex-col gap-4 mb-8">
+      <div className="flex flex-col gap-6 mb-8">
         {/* Boss Preset */}
-        <div className="bg-dark/50 p-3 rounded-lg border border-gray-700 flex flex-col md:flex-row gap-3 items-center">
-          <div className="flex items-center gap-2 text-violet-400 font-bold uppercase text-sm">
-            <Map size={18} />
-            <span>Campaign Boss:</span>
+        <div className="bg-gray-50 border-2 border-black rounded-2xl p-6 shadow-inner">
+          <div className="flex items-center gap-2 text-black font-black uppercase text-xs mb-4">
+            <Map size={18} className="text-scarlet" />
+            <span>Select Major Encounter:</span>
           </div>
           <select
             onChange={(e) => loadBoss(e.target.value)}
-            className="flex-grow bg-dark border border-gray-600 text-white text-sm rounded px-3 py-2 focus:outline-none focus:border-violet-500"
+            className="w-full bg-white border-2 border-black text-black font-bold text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-scarlet/10 cursor-pointer"
           >
-            <option value="">-- Select a Gym Leader / Boss --</option>
+            <option value="">-- Choose Gym Leader / Boss --</option>
             {BOSSES.map((b) => (
               <option key={b.name} value={b.name}>
                 {b.label} (Lv {b.level})
@@ -944,8 +949,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
-          <div className="relative flex-grow flex gap-2 z-20">
+          <div className="relative flex-grow flex gap-4 z-20">
             <div className="flex-grow">
+              <div className="text-[10px] text-gray-400 font-bold uppercase mb-1 ml-1">Custom Opponent</div>
               <AutocompleteInput
                 value={enemyName}
                 onChange={(val) => {
@@ -955,25 +961,25 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                 }}
                 onSubmit={handleAnalyze}
                 fetchData={getPokemonNames}
-                placeholder="Or enter Custom Opponent..."
+                placeholder="Name..."
                 isLoading={loading}
               />
             </div>
 
-            <div className="w-24 bg-dark border border-gray-600 rounded flex flex-col px-2 py-1 justify-center shrink-0">
-              <label className="text-[10px] text-gray-400 uppercase font-bold">
+            <div className="w-28 bg-white border-2 border-black rounded-xl flex flex-col px-3 py-1 justify-center shrink-0 shadow-sm transition-focus focus-within:ring-4 focus-within:ring-scarlet/10">
+              <label className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
                 Level
               </label>
               <select
                 value={enemyLevel}
                 onChange={(e) => setEnemyLevel(parseInt(e.target.value))}
-                className="w-full bg-transparent text-white font-mono text-lg focus:outline-none cursor-pointer"
+                className="w-full bg-transparent text-black font-black text-lg focus:outline-none cursor-pointer"
               >
                 {Array.from({ length: 100 }, (_, i) => i + 1).map((level) => (
                   <option
                     key={level}
                     value={level}
-                    className="bg-dark text-white"
+                    className="bg-white text-black"
                   >
                     {level}
                   </option>
@@ -984,9 +990,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           <button
             onClick={handleAnalyze}
             disabled={loading}
-            className="bg-gradient-to-r from-scarlet-600 to-red-700 hover:from-scarlet-500 hover:to-red-600 text-white font-bold py-3 px-8 rounded shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 min-w-[140px] z-10"
+            className="bg-scarlet hover:bg-red-600 text-white font-black py-4 px-10 rounded-2xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2 min-w-[160px] border-b-4 border-red-800 z-10 uppercase tracking-widest text-sm"
           >
-            {loading ? <Loader2 className="animate-spin" /> : "ANALYZE"}
+            {loading ? <Loader2 className="animate-spin" /> : "Analyze"}
           </button>
         </div>
 
@@ -1008,24 +1014,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           </div>
         )}
 
-        <div className="flex items-center gap-2 bg-dark/50 p-2 rounded-lg self-start border border-gray-700">
+        <div className="flex items-center gap-2 bg-gray-100 p-2.5 rounded-2xl self-start border-2 border-black shadow-inner">
           <Zap
             size={16}
-            className={isCompetitive ? "text-yellow-400" : "text-gray-500"}
+            className={isCompetitive ? "text-yellow-500" : "text-gray-400"}
           />
-          <span className="text-sm text-gray-300 font-bold uppercase">
+          <span className="text-sm text-black font-black uppercase tracking-tighter">
             Competitive Mode
           </span>
           <button
             onClick={() => setIsCompetitive(!isCompetitive)}
-            className={`w-10 h-5 rounded-full relative transition-colors duration-200 ease-in-out ${
-              isCompetitive ? "bg-violet-600" : "bg-gray-600"
-            }`}
+            className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isCompetitive ? "bg-black" : "bg-gray-300"
+              }`}
           >
             <div
-              className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all duration-200 ${
-                isCompetitive ? "left-6" : "left-1"
-              }`}
+              className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-md transition-all duration-300 ${isCompetitive ? "left-7" : "left-1"
+                }`}
             />
           </button>
         </div>
@@ -1041,17 +1045,17 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
       {enemyData && (
         <div className="animate-fade-in">
           {/* Enemy Header */}
-          <div className="flex items-center gap-6 p-4 bg-dark rounded-lg border border-gray-700 mb-6 relative overflow-hidden group">
-            <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-red-900/20 to-transparent pointer-events-none"></div>
+          <div className="flex items-center gap-8 p-6 bg-white rounded-3xl border-4 border-black mb-8 relative overflow-hidden group shadow-2xl">
+            <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
 
-            <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center border-2 border-gray-600 z-10 relative">
+            <div className="w-28 h-28 bg-gray-50 rounded-full flex items-center justify-center border-4 border-black z-10 relative shadow-inner">
               <img
                 src={
                   enemyData.sprites.other?.["official-artwork"].front_default ||
                   enemyData.sprites.front_default
                 }
                 alt={enemyData.name}
-                className="w-20 h-20 object-contain"
+                className="w-24 h-24 object-contain"
               />
               {enemyTera && (
                 <div className="absolute -bottom-2 -right-2 bg-violet-600 text-[10px] px-2 py-0.5 rounded-full border border-white text-white font-bold uppercase shadow-lg z-20">
@@ -1060,10 +1064,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               )}
             </div>
             <div className="z-10 flex-grow">
-              <div className="flex items-center gap-4">
-                <h3 className="text-2xl font-bold capitalize text-white flex items-center gap-2">
+              <div className="flex items-center gap-6">
+                <h3 className="text-3xl font-black capitalize text-black flex items-center gap-3">
                   {enemyData.name}
-                  <span className="text-sm bg-gray-700 px-2 py-0.5 rounded text-gray-300">
+                  <span className="text-sm bg-black text-white px-3 py-1 rounded-full font-bold">
                     Lv. {enemyLevel}
                   </span>
                 </h3>
@@ -1071,11 +1075,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                 {/* Catch Button */}
                 <button
                   onClick={() => onToggleCaught(enemyData.name)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${
-                    isCaught
-                      ? "bg-green-600 hover:bg-green-500 text-white border border-green-400"
-                      : "bg-white hover:bg-gray-200 text-red-600 border border-red-500"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${isCaught
+                    ? "bg-green-600 hover:bg-green-500 text-white border border-green-400"
+                    : "bg-white hover:bg-gray-200 text-red-600 border border-red-500"
+                    }`}
                   title={isCaught ? "Remove from Pokedex" : "Add to Pokedex"}
                 >
                   {isCaught ? (
@@ -1100,15 +1103,17 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   </span>
                 ))}
                 {enemyTera && (
-                  <span className="px-2 py-1 rounded text-xs font-bold text-white uppercase border border-violet-500 bg-violet-900/50">
-                    Tera: {enemyTera}
+                  <span className="px-2 py-1 rounded text-xs font-black text-white uppercase border-2 border-black/10 shadow-sm"
+                    style={{ backgroundColor: TYPE_COLORS[enemyTera] || "#8a2be2" }}
+                  >
+                    TERA: {enemyTera}
                   </span>
                 )}
               </div>
-              <div className="mt-2 text-gray-400 font-mono text-sm flex items-center gap-2">
-                <Gauge size={14} />
+              <div className="mt-3 text-black font-black text-sm flex items-center gap-2 opacity-60 uppercase tracking-tighter">
+                <Gauge size={14} className="text-scarlet" />
                 Est. Speed:{" "}
-                <span className="text-white font-bold">
+                <span className="text-black font-black">
                   {calculateStat(
                     enemyData.stats.find((s) => s.stat.name === "speed")
                       ?.base_stat || 0,
@@ -1134,41 +1139,40 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               let shadow = "";
 
               if (isBestCounter) {
-                borderColor = "border-amber-400";
-                bgGlow = "bg-amber-900/10";
-                shadow = "shadow-[0_0_15px_rgba(251,191,36,0.2)]";
+                borderColor = "border-amber-500 shadow-xl shadow-amber-500/10";
+                bgGlow = "bg-amber-50/50";
+                shadow = "scale-[1.02] z-10";
               } else if (isBestCatcher) {
-                borderColor = "border-blue-400";
-                bgGlow = "bg-blue-900/10";
-                shadow = "shadow-[0_0_15px_rgba(96,165,250,0.2)]";
+                borderColor = "border-blue-500 shadow-xl shadow-blue-500/10";
+                bgGlow = "bg-blue-50/50";
+                shadow = "scale-[1.02] z-10";
               } else if (matchup.offensiveScore >= 4) {
                 borderColor = "border-green-500";
-                bgGlow = "bg-green-900/10";
+                bgGlow = "bg-green-50/30";
               } else if (matchup.offensiveScore >= 2) {
-                borderColor = "border-green-600";
-                bgGlow = "bg-green-900/5";
+                borderColor = "border-green-400";
+                bgGlow = "bg-green-50/20";
               } else if (matchup.offensiveScore < 1) {
-                borderColor = "border-red-600";
-                bgGlow = "bg-red-900/5";
+                borderColor = "border-red-500";
+                bgGlow = "bg-red-50/30";
               }
 
               return (
                 <div
                   key={idx}
-                  className={`border-l-4 ${borderColor} ${bgGlow} ${shadow} bg-card p-4 rounded r-0 flex flex-col gap-2 relative overflow-hidden transition-all hover:bg-[#333]`}
+                  className={`border-4 ${borderColor} ${bgGlow} ${shadow} bg-white p-5 rounded-2xl flex flex-col gap-2 relative overflow-hidden transition-all hover:shadow-2xl hover:-translate-y-1 block`}
                 >
                   {isBestCounter && (
-                    <div className="absolute right-0 top-0 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-bl uppercase flex items-center gap-1 shadow-lg z-10">
-                      <Crown size={12} /> Best Counter
+                    <div className="absolute right-0 top-0 bg-amber-500 text-black text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black">
+                      <Crown size={12} /> BEST COUNTER
                     </div>
                   )}
                   {isBestCatcher && (
                     <div
-                      className={`absolute right-0 ${
-                        isBestCounter ? "top-6" : "top-0"
-                      } bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl uppercase flex items-center gap-1 shadow-lg z-10`}
+                      className={`absolute right-0 ${isBestCounter ? "top-8" : "top-0"
+                        } bg-blue-500 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black`}
                     >
-                      <CircleDot size={12} /> Best Catcher
+                      <CircleDot size={12} /> BEST CATCHER
                     </div>
                   )}
 
@@ -1190,48 +1194,47 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
                   <div className="flex justify-between items-start pr-6 mt-2">
                     <div>
-                      <span className="font-bold capitalize text-lg block">
+                      <span className="font-black capitalize text-xl block text-black">
                         {member.data.name}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        Lv. {member.level}
+                      <span className="text-xs text-black/40 font-black uppercase tracking-widest">
+                        LV {member.level}
                       </span>
                     </div>
 
                     <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-1 text-xs bg-dark/50 px-2 py-1 rounded mb-1">
+                      <div className="flex items-center gap-1.5 text-[10px] bg-gray-50 border-2 border-black/5 px-2.5 py-1 rounded-full mb-1 shadow-inner">
                         {matchup.speedTier === "faster" && (
-                          <ArrowUpCircle size={14} className="text-green-500" />
+                          <ArrowUpCircle size={14} className="text-green-600" />
                         )}
                         {matchup.speedTier === "slower" && (
-                          <ArrowDownCircle size={14} className="text-red-500" />
+                          <ArrowDownCircle size={14} className="text-red-600" />
                         )}
                         {matchup.speedTier === "tie" && (
-                          <MinusCircle size={14} className="text-yellow-500" />
+                          <MinusCircle size={14} className="text-yellow-600" />
                         )}
                         <span
-                          className={`font-bold ${
-                            matchup.speedTier === "faster"
-                              ? "text-green-400"
-                              : matchup.speedTier === "slower"
-                              ? "text-red-400"
-                              : "text-yellow-400"
-                          }`}
+                          className={`font-black uppercase tracking-widest ${matchup.speedTier === "faster"
+                            ? "text-green-600"
+                            : matchup.speedTier === "slower"
+                              ? "text-red-600"
+                              : "text-yellow-600"
+                            }`}
                         >
                           {matchup.speedTier === "faster"
                             ? "Faster"
                             : matchup.speedTier === "slower"
-                            ? "Slower"
-                            : "Tie"}
+                              ? "Slower"
+                              : "Tie"}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-gray-400 text-sm">Best Type:</span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-black/40 text-[10px] font-black uppercase tracking-widest">Best Type:</span>
                     <span
-                      className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase"
+                      className="px-2 py-0.5 rounded text-[10px] font-black text-white uppercase shadow-sm"
                       style={{
                         backgroundColor:
                           TYPE_COLORS[matchup.bestMoveType] || "#666",
@@ -1242,13 +1245,12 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   </div>
 
                   <div
-                    className={`mt-1 font-bold text-sm ${
-                      matchup.offensiveScore >= 2
-                        ? "text-green-400"
-                        : matchup.offensiveScore < 1
-                        ? "text-red-400"
-                        : "text-gray-300"
-                    }`}
+                    className={`mt-2 font-black text-[11px] uppercase tracking-widest ${matchup.offensiveScore >= 2
+                      ? "text-green-600"
+                      : matchup.offensiveScore < 1
+                        ? "text-red-600"
+                        : "text-black/30"
+                      }`}
                   >
                     {matchup.message}
                   </div>
@@ -1264,17 +1266,17 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
                   {/* Catch Recommendations */}
                   {isBestCatcher && matchup.catchMoves.length > 0 && (
-                    <div className="mt-2 bg-blue-900/20 border border-blue-800/50 p-2 rounded">
-                      <div className="text-[10px] text-blue-300 uppercase font-bold mb-1 flex items-center gap-1">
-                        <CircleDot size={10} /> Catch Strategy
+                    <div className="mt-3 bg-blue-50 border-2 border-blue-100 p-3 rounded-xl shadow-inner">
+                      <div className="text-[10px] text-blue-900 uppercase font-black mb-2 flex items-center gap-1.5 tracking-widest">
+                        <CircleDot size={12} /> CATCH STRATEGY
                       </div>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1.5">
                         {matchup.catchMoves.map((m) => (
                           <span
                             key={m}
-                            className="text-[10px] bg-blue-800 px-1.5 py-0.5 rounded text-white capitalize"
+                            className="text-[10px] bg-white border border-blue-200 px-2 py-1 rounded-lg text-blue-700 capitalize font-bold shadow-sm"
                           >
-                            {m}
+                            {m.replace(/-/g, ' ')}
                           </span>
                         ))}
                       </div>
@@ -1283,23 +1285,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
                   {matchup.defensiveScore >= 1 && (
                     <div
-                      className={`mt-3 pt-2 border-t border-white/5 text-xs flex items-center gap-2 ${
-                        matchup.defensiveScore >= 2
-                          ? "text-red-400"
-                          : "text-gray-400"
-                      }`}
+                      className={`mt-4 pt-3 border-t border-black/5 text-[10px] flex items-center gap-2 font-black tracking-widest ${matchup.defensiveScore >= 2
+                        ? "text-red-600"
+                        : "text-black/30"
+                        }`}
                     >
                       {matchup.defensiveScore >= 2 ? (
-                        <ShieldAlert size={14} />
+                        <ShieldAlert size={16} />
                       ) : (
-                        <div className="w-3" />
+                        <div className="w-4" />
                       )}
-                      <span>
+                      <span className="uppercase tracking-tighter">
                         {matchup.defensiveScore >= 4
                           ? "Takes 4x Damage!"
                           : matchup.defensiveScore >= 2
-                          ? "Takes Super Effective Dmg!"
-                          : "Takes Neutral Damage."}
+                            ? "Takes Super Effective Dmg!"
+                            : "Takes Neutral Damage."}
                       </span>
                     </div>
                   )}
@@ -1310,24 +1311,24 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
           {/* Team Weakness Matrix */}
           {teamWeaknesses.length > 0 && (
-            <div className="bg-red-900/10 border border-red-900/30 rounded p-4">
-              <h3 className="text-red-400 font-bold uppercase text-xs mb-3 flex items-center gap-2">
-                <ShieldAlert size={16} />
-                Team Defense Gaps (Shared Weaknesses)
+            <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-2xl mt-8">
+              <h3 className="text-black font-black uppercase text-sm mb-4 flex items-center gap-2 tracking-widest">
+                <ShieldAlert size={18} className="text-scarlet" />
+                Team Defense Gaps
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {teamWeaknesses.map((w) => (
                   <div
                     key={w.type}
-                    className="flex items-center bg-dark/80 rounded border border-gray-700 overflow-hidden"
+                    className="flex items-center bg-gray-50 rounded-xl border-2 border-black overflow-hidden shadow-sm"
                   >
                     <span
-                      className="px-2 py-1 text-[10px] font-bold text-white uppercase"
+                      className="px-3 py-1.5 text-xs font-black text-white uppercase shadow-inner"
                       style={{ backgroundColor: TYPE_COLORS[w.type] || "#555" }}
                     >
                       {w.type}
                     </span>
-                    <span className="px-2 py-1 text-xs text-red-300 font-bold">
+                    <span className="px-3 py-1.5 text-xs text-red-600 font-black uppercase tracking-tighter">
                       {w.count} Weak
                     </span>
                   </div>
@@ -1356,8 +1357,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
             />
           )}
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 

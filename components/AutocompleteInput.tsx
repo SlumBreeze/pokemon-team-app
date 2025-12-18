@@ -11,12 +11,12 @@ interface AutocompleteInputProps {
   onBlur?: () => void;
 }
 
-const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ 
-  value, 
-  onChange, 
-  onSubmit, 
+const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
+  value,
+  onChange,
+  onSubmit,
   fetchData,
-  placeholder, 
+  placeholder,
   isLoading,
   onBlur
 }) => {
@@ -50,7 +50,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     }
 
     const lowerVal = value.toLowerCase();
-    
+
     // Sort logic: Starts with query first, then alphabetical
     const filtered = allOptions
       .filter(n => n.includes(lowerVal))
@@ -84,43 +84,43 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <input 
+      <input
         type="text"
         value={value}
         onChange={(e) => {
-            onChange(e.target.value);
-            setShowSuggestions(true);
+          onChange(e.target.value);
+          setShowSuggestions(true);
         }}
         onKeyDown={handleKeyDown}
         onBlur={() => {
-            // Delay blur to allow suggestion click to register
-            setTimeout(() => {
-               if (onBlur) onBlur();
-            }, 200);
+          // Delay blur to allow suggestion click to register
+          setTimeout(() => {
+            if (onBlur) onBlur();
+          }, 200);
         }}
         placeholder={placeholder}
-        className="w-full bg-dark border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors pr-8 placeholder:text-gray-600"
+        className="w-full bg-gray-50 border-2 border-black rounded-xl px-4 py-2 text-sm text-black focus:outline-none focus:ring-4 focus:ring-black/5 transition-all pr-10 placeholder:text-gray-400 font-bold"
         autoComplete="off"
       />
-      
-      <div className="absolute right-2 top-2.5 text-gray-500 pointer-events-none">
+
+      <div className="absolute right-3 top-2.5 text-black pointer-events-none">
         {isLoading ? (
-          <Loader2 size={16} className="animate-spin text-violet-500" />
+          <Loader2 size={16} className="animate-spin text-scarlet" />
         ) : (
-          <Search size={16} />
+          <Search size={16} className="opacity-40" />
         )}
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full bg-card border border-gray-600 rounded-b shadow-xl max-h-48 overflow-y-auto mt-0.5 animate-in fade-in zoom-in-95 duration-100">
+        <ul className="absolute z-50 w-full bg-white border-2 border-black rounded-xl shadow-2xl max-h-56 overflow-y-auto mt-2 animate-in fade-in zoom-in-95 duration-150 p-1">
           {suggestions.map((name) => (
-            <li 
+            <li
               key={name}
               onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent input blur
-                  handleSuggestionClick(name);
+                e.preventDefault(); // Prevent input blur
+                handleSuggestionClick(name);
               }}
-              className="px-3 py-2 text-sm text-gray-200 hover:bg-violet-600 hover:text-white cursor-pointer capitalize border-b border-gray-700 last:border-0"
+              className="px-4 py-2.5 text-sm text-black hover:bg-scarlet hover:text-white rounded-lg cursor-pointer capitalize font-bold transition-colors mb-0.5 last:mb-0"
             >
               {name.replace(/-/g, ' ')}
             </li>

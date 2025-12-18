@@ -3,10 +3,11 @@ import TeamSlot from "./components/TeamSlot";
 import AnalysisSection from "./components/AnalysisSection";
 import PokedexView from "./components/PokedexView";
 import ProfileManager from "./components/ProfileManager";
+import PokemonFinder from "./components/PokemonFinder";
 import { TeamMember, Profile, ProfilesState } from "./types";
 import { fetchPokemon, fetchEvolutionInfo } from "./services/pokeApi";
 import { generateBestTeam } from "./utils/teamOptimizer";
-import { Save, Upload, LayoutGrid, Users } from "lucide-react";
+import { Save, Upload, LayoutGrid, Users, MapPin } from "lucide-react";
 
 const generateId = () => {
   try {
@@ -40,7 +41,6 @@ const createDefaultProfile = (): Profile => ({
   id: generateId(),
   name: "Default",
   team: INITIAL_TEAM,
-  caughtPokemon: [],
   lastUpdated: Date.now(),
 });
 
@@ -48,10 +48,11 @@ const App: React.FC = () => {
   // --- Profile State ---
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [activeProfileId, setActiveProfileId] = useState<string>("");
+  const [globalCaughtPokemon, setGlobalCaughtPokemon] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Global State ---
-  const [activeTab, setActiveTab] = useState<"builder" | "pokedex">("builder");
+  const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder">("builder");
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
   const [targetBossType, setTargetBossType] = useState<string | undefined>(
     undefined
@@ -61,7 +62,7 @@ const App: React.FC = () => {
   // Get current profile data
   const activeProfile = profiles[activeProfileId];
   const team = activeProfile?.team || INITIAL_TEAM;
-  const caughtPokemon = activeProfile?.caughtPokemon || [];
+  const caughtPokemon = globalCaughtPokemon;
 
   // --- Profile Persistence (API) ---
   useEffect(() => {
@@ -74,11 +75,13 @@ const App: React.FC = () => {
         if (data && data.profiles && Object.keys(data.profiles).length > 0) {
           setProfiles(data.profiles);
           setActiveProfileId(data.activeProfileId);
+          setGlobalCaughtPokemon(data.globalCaughtPokemon || []);
         } else {
           // No saved profiles or empty object from server, create default
           const defaultProfile = createDefaultProfile();
           setProfiles({ [defaultProfile.id]: defaultProfile });
           setActiveProfileId(defaultProfile.id);
+          setGlobalCaughtPokemon([]);
         }
       } catch (e) {
         console.warn("Server profiles unreachable, using local default:", e);
@@ -99,7 +102,11 @@ const App: React.FC = () => {
 
     const saveTimeout = setTimeout(async () => {
       try {
-        const state: ProfilesState = { activeProfileId, profiles };
+        const state: ProfilesState = {
+          activeProfileId,
+          profiles,
+          globalCaughtPokemon
+        };
         await fetch("/api/profiles", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -111,7 +118,7 @@ const App: React.FC = () => {
     }, 500); // Debounce 500ms
 
     return () => clearTimeout(saveTimeout);
-  }, [profiles, activeProfileId, isLoaded]);
+  }, [profiles, activeProfileId, globalCaughtPokemon, isLoaded]);
 
   // Hydrate evolution info for team members that are missing it
   useEffect(() => {
@@ -155,6 +162,42 @@ const App: React.FC = () => {
 
     hydrateEvolutionInfo();
   }, [isLoaded, activeProfileId]); // Re-run when profile changes
+
+  // --- Global Pokedex Migration Bridge ---
+  // If legacy data exists in ANY profile, merge it into global and clean up.
+  useEffect(() => {
+    if (!isLoaded || Object.keys(profiles).length === 0) return;
+
+    const allCaught = new Set<string>(globalCaughtPokemon);
+    let hasLegacyData = false;
+
+    // Check all profiles for legacy caught lists
+    Object.values(profiles).forEach((p: any) => {
+      if (p.caughtPokemon && Array.isArray(p.caughtPokemon) && p.caughtPokemon.length > 0) {
+        p.caughtPokemon.forEach((name: string) => allCaught.add(name));
+        hasLegacyData = true;
+      }
+    });
+
+    if (hasLegacyData) {
+      console.log("Migration: Legacy Pokedex data detected. Merging...");
+      const mergedList = Array.from(allCaught);
+      setGlobalCaughtPokemon(mergedList);
+
+      // Clean up legacy data from ALL profiles in the state
+      setProfiles(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(id => {
+          const p = { ...next[id] };
+          if ((p as any).caughtPokemon) {
+            delete (p as any).caughtPokemon;
+          }
+          next[id] = p as Profile;
+        });
+        return next;
+      });
+    }
+  }, [isLoaded, profiles, globalCaughtPokemon]);
 
   // --- Profile Management ---
   const updateActiveProfile = (updates: Partial<Profile>) => {
@@ -233,8 +276,8 @@ const App: React.FC = () => {
     updater: string[] | ((prev: string[]) => string[])
   ) => {
     const newCaught =
-      typeof updater === "function" ? updater(caughtPokemon) : updater;
-    updateActiveProfile({ caughtPokemon: newCaught });
+      typeof updater === "function" ? updater(globalCaughtPokemon) : updater;
+    setGlobalCaughtPokemon(newCaught);
   };
 
   // --- Team Management ---
@@ -259,19 +302,19 @@ const App: React.FC = () => {
       prev.map((member, i) =>
         i === index
           ? {
-              ...member,
-              data: null,
-              selectedAbility: "",
-              abilityDescription: "",
-              teraType: "",
-              heldItem: "",
-              heldItemDescription: "",
-              level: 20,
-              loading: false,
-              error: null,
-              customName: "",
-              locked: false,
-            }
+            ...member,
+            data: null,
+            selectedAbility: "",
+            abilityDescription: "",
+            teraType: "",
+            heldItem: "",
+            heldItemDescription: "",
+            level: 20,
+            loading: false,
+            error: null,
+            customName: "",
+            locked: false,
+          }
           : member
       )
     );
@@ -347,7 +390,7 @@ const App: React.FC = () => {
 
   // --- Save System ---
   const handleExport = () => {
-    const data = JSON.stringify({ team, caughtPokemon }, null, 2);
+    const data = JSON.stringify({ team, globalCaughtPokemon: caughtPokemon }, null, 2);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -372,8 +415,10 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (parsed.team && Array.isArray(parsed.team)) setTeam(parsed.team);
-        if (parsed.caughtPokemon && Array.isArray(parsed.caughtPokemon))
-          setCaughtPokemon(parsed.caughtPokemon);
+        if (parsed.globalCaughtPokemon && Array.isArray(parsed.globalCaughtPokemon))
+          setGlobalCaughtPokemon(parsed.globalCaughtPokemon);
+        else if (parsed.caughtPokemon && Array.isArray(parsed.caughtPokemon))
+          setGlobalCaughtPokemon(parsed.caughtPokemon); // Legacy support
         alert("Save file imported successfully!");
       } catch (err) {
         alert("Failed to parse save file.");
@@ -384,8 +429,25 @@ const App: React.FC = () => {
     e.target.value = "";
   };
 
+  const handleExportPokedex = () => {
+    if (globalCaughtPokemon.length === 0) return;
+    const data = JSON.stringify({
+      trainer: "Paldea Trainer",
+      exportDate: new Date().toISOString(),
+      pokedexCount: globalCaughtPokemon.length,
+      caughtPokemon: globalCaughtPokemon
+    }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pokedex-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 font-sans pb-20">
+    <div className="min-h-screen bg-scarlet text-dark font-sans pb-20">
       <input
         type="file"
         ref={fileInputRef}
@@ -395,41 +457,52 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-pink-600/90 via-fuchsia-600/90 to-purple-700/90 backdrop-blur-md border-b border-pink-400/30 sticky top-0 z-50 shadow-lg shadow-purple-900/30">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      <header className="bg-white border-b-8 border-black sticky top-0 z-50 shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white border-4 border-black rounded-full flex items-center justify-center relative shadow-inner">
+                <div className="w-4 h-4 bg-white border-2 border-black rounded-full z-10"></div>
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-scarlet border-b-2 border-black rounded-t-full"></div>
+              </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-white drop-shadow-lg">
-                  Scarlet<span className="text-pink-200 mx-1">&</span>Violet
+                <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-black drop-shadow-sm flex items-center gap-2">
+                  Trainer Hub <span className="text-scarlet">SV</span>
                 </h1>
-                <p className="text-[10px] text-pink-100/80 tracking-widest uppercase">
-                  Trainer Hub & Team Analyzer
+                <p className="text-[10px] text-gray-500 tracking-widest uppercase font-bold">
+                  Team Analyzer & Management
                 </p>
               </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex bg-black/40 rounded-full p-1 border border-gray-700">
+            <div className="flex bg-gray-100 rounded-full p-1 border-2 border-black shadow-md">
               <button
                 onClick={() => setActiveTab("builder")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  activeTab === "builder"
-                    ? "bg-scarlet-600 text-white shadow-lg"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "builder"
+                  ? "bg-scarlet text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
               >
                 <Users size={16} /> Team Builder
               </button>
               <button
                 onClick={() => setActiveTab("pokedex")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  activeTab === "pokedex"
-                    ? "bg-violet-600 text-white shadow-lg"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "pokedex"
+                  ? "bg-black text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
               >
                 <LayoutGrid size={16} /> My Pokedex
+              </button>
+              <button
+                onClick={() => setActiveTab("finder")}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "finder"
+                  ? "bg-scarlet text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
+              >
+                <MapPin size={16} /> Locations
               </button>
             </div>
 
@@ -443,18 +516,19 @@ const App: React.FC = () => {
                 onRenameProfile={renameProfile}
                 onDeleteProfile={deleteProfile}
                 onDuplicateProfile={duplicateProfile}
+                globalCaughtPokemon={globalCaughtPokemon}
               />
-              <div className="h-6 w-px bg-pink-400/30" />
+              <div className="h-6 w-px bg-gray-200" />
               <button
                 onClick={handleImportClick}
-                className="p-2 text-pink-200/60 hover:text-white hover:bg-white/10 rounded transition-colors"
+                className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200"
                 title="Import Save File"
               >
                 <Upload size={16} />
               </button>
               <button
                 onClick={handleExport}
-                className="p-2 text-pink-200/60 hover:text-white hover:bg-white/10 rounded transition-colors"
+                className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200"
                 title="Export Save File"
               >
                 <Save size={16} />
@@ -468,8 +542,8 @@ const App: React.FC = () => {
         {activeTab === "builder" && (
           <div className="animate-in slide-in-from-left-4 duration-300">
             <div className="mb-6">
-              <h2 className="text-xl font-bold mb-4 text-scarlet-400 uppercase tracking-wide flex items-center gap-2">
-                <span className="w-2 h-8 bg-scarlet-600 rounded-full inline-block"></span>
+              <h2 className="text-xl font-bold mb-4 text-white uppercase tracking-wide flex items-center gap-2 drop-shadow-md">
+                <span className="w-2 h-8 bg-black rounded-full inline-block"></span>
                 Current Team
               </h2>
 
@@ -504,14 +578,21 @@ const App: React.FC = () => {
               onToggleCaught={toggleCaught}
               onAutoBuild={handleAutoBuild}
               isBuilding={isAutoBuilding}
+              onExport={handleExportPokedex}
             />
+          </div>
+        )}
+
+        {activeTab === "finder" && (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <PokemonFinder />
           </div>
         )}
       </main>
 
-      <footer className="text-center py-8 text-gray-600 text-sm">
+      <footer className="text-center py-8 text-white/60 text-sm">
         <p>
-          &copy; {new Date().getFullYear()} Team Analyzer. Pokémon Data provided
+          &copy; {new Date().getFullYear()} Trainer Hub Analyzer. Pokémon Data provided
           by PokéAPI.
         </p>
         <p className="text-xs mt-1">
