@@ -321,7 +321,39 @@ export const fetchMoveType = async (url: string): Promise<string> => {
   }
 };
 
-export const fetchEncounterLocations = async (url: string): Promise<string[]> => {
+export const fetchEncounterLocations = async (
+  url: string,
+  pokemonName?: string
+): Promise<string[]> => {
+  // 1. Check Local Custom Data First
+  if (pokemonName) {
+    // Normalize name to capitalized words (e.g. "lechonk" -> "Lechonk")
+    // The keys in localLocations are Capitalized.
+    const cleanName =
+      pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1).toLowerCase();
+
+    // Handle special cases with hyphens if necessary, or just try direct match first
+    // The extracted data has keys like "Iron Bundle", "Great Tusk" (Space separated)
+    // But input pokemonName might be "iron-bundle"
+
+    // Try to match by converting "iron-bundle" -> "Iron Bundle"
+    const formattedName = pokemonName
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+    const { LOCAL_ENCOUNTER_LOCATIONS } = await import("./localLocations");
+
+    if (LOCAL_ENCOUNTER_LOCATIONS[formattedName]) {
+      return LOCAL_ENCOUNTER_LOCATIONS[formattedName];
+    }
+    // Fallback for simple names
+    if (LOCAL_ENCOUNTER_LOCATIONS[cleanName]) {
+      return LOCAL_ENCOUNTER_LOCATIONS[cleanName];
+    }
+  }
+
+  // 2. Fallback to API
   if (!url) return [];
 
   try {
@@ -335,20 +367,21 @@ export const fetchEncounterLocations = async (url: string): Promise<string[]> =>
 
     data.forEach((encounter: any) => {
       // Check if this encounter area has details for SV
-      const hasSV = encounter.version_details.some((detail: any) =>
-        detail.version.name === "scarlet" || detail.version.name === "violet"
+      const hasSV = encounter.version_details.some(
+        (detail: any) =>
+          detail.version.name === "scarlet" || detail.version.name === "violet"
       );
 
       if (hasSV) {
         // Clean up the name
         const cleanName = encounter.location_area.name
-          .replace(/-/g, ' ')
-          .replace(/area/gi, 'Area')
-          .replace(/province/gi, 'Province')
-          .replace(/sea/gi, 'Sea')
-          .replace(/path/gi, 'Path')
-          .replace(/passage/gi, 'Passage')
-          .replace(/cavern/gi, 'Cavern');
+          .replace(/-/g, " ")
+          .replace(/area/gi, "Area")
+          .replace(/province/gi, "Province")
+          .replace(/sea/gi, "Sea")
+          .replace(/path/gi, "Path")
+          .replace(/passage/gi, "Passage")
+          .replace(/cavern/gi, "Cavern");
 
         locations.add(cleanName);
       }
