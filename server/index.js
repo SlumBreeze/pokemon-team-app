@@ -51,7 +51,7 @@ app.get('/api/profiles', (req, res) => {
     if (data) {
         res.json(data);
     } else {
-        res.json(null);
+        res.json({});
     }
 });
 
