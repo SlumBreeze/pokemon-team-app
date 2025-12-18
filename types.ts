@@ -34,7 +34,7 @@ export interface PokemonData {
   sprites: {
     front_default: string;
     other?: {
-      'official-artwork': {
+      "official-artwork": {
         front_default: string;
       };
     };
@@ -51,6 +51,7 @@ export interface EvolutionData {
   nextEvolutionName?: string;
   minLevel?: number;
   triggerCondition?: string;
+  error?: string;
 }
 
 export interface TeamMember {
@@ -78,9 +79,24 @@ export interface Boss {
 }
 
 export type TypeName =
-  | 'normal' | 'fire' | 'water' | 'electric' | 'grass' | 'ice'
-  | 'fighting' | 'poison' | 'ground' | 'flying' | 'psychic' | 'bug'
-  | 'rock' | 'ghost' | 'dragon' | 'steel' | 'dark' | 'fairy';
+  | "normal"
+  | "fire"
+  | "water"
+  | "electric"
+  | "grass"
+  | "ice"
+  | "fighting"
+  | "poison"
+  | "ground"
+  | "flying"
+  | "psychic"
+  | "bug"
+  | "rock"
+  | "ghost"
+  | "dragon"
+  | "steel"
+  | "dark"
+  | "fairy";
 
 export interface MatchupResult {
   memberId: string;
@@ -88,7 +104,7 @@ export interface MatchupResult {
   defensiveScore: number;
   bestMoveType: string;
   speedDiff: number;
-  speedTier: 'faster' | 'slower' | 'tie';
+  speedTier: "faster" | "slower" | "tie";
   message: string;
   mySpeed: number;
   enemySpeed: number;

@@ -649,7 +649,7 @@
           "teraType": "electric",
           "heldItem": "Muscle Band",
           "heldItemDescription": "Held: Boosts the damage of physical moves used by the holder by 10%.",
-          "level": 28,
+          "level": 30,
           "loading": false,
           "error": null,
           "customName": "",
@@ -657,7 +657,7 @@
           "evolutionDetails": {
             "isFullyEvolved": false,
             "nextEvolutionName": "pawmot",
-            "triggerCondition": "Unknown"
+            "triggerCondition": "other"
           }
         },
         {
@@ -666,94 +666,92 @@
             "abilities": [
               {
                 "ability": {
-                  "name": "purifying-salt",
-                  "url": "https://pokeapi.co/api/v2/ability/272/"
+                  "name": "torrent",
+                  "url": "https://pokeapi.co/api/v2/ability/67/"
                 },
                 "is_hidden": false,
                 "slot": 1
               },
               {
                 "ability": {
-                  "name": "sturdy",
-                  "url": "https://pokeapi.co/api/v2/ability/5/"
-                },
-                "is_hidden": false,
-                "slot": 2
-              },
-              {
-                "ability": {
-                  "name": "clear-body",
-                  "url": "https://pokeapi.co/api/v2/ability/29/"
+                  "name": "moxie",
+                  "url": "https://pokeapi.co/api/v2/ability/153/"
                 },
                 "is_hidden": true,
                 "slot": 3
               }
             ],
-            "base_experience": 124,
+            "base_experience": 144,
             "cries": {
-              "latest": "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/933.ogg",
+              "latest": "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/913.ogg",
               "legacy": null
             },
             "forms": [
               {
-                "name": "naclstack",
-                "url": "https://pokeapi.co/api/v2/pokemon-form/933/"
+                "name": "quaxwell",
+                "url": "https://pokeapi.co/api/v2/pokemon-form/913/"
               }
             ],
             "game_indices": [],
-            "height": 6,
+            "height": 12,
             "held_items": [],
-            "id": 933,
+            "id": 913,
             "is_default": true,
-            "location_area_encounters": "https://pokeapi.co/api/v2/pokemon/933/encounters",
+            "location_area_encounters": "https://pokeapi.co/api/v2/pokemon/913/encounters",
             "moves": [
               {
-                "name": "recover",
-                "url": "https://pokeapi.co/api/v2/move/105/",
-                "level_learned_at": 30,
+                "name": "focus-energy",
+                "url": "https://pokeapi.co/api/v2/move/116/",
+                "level_learned_at": 32,
                 "learn_method": "level-up"
               },
               {
-                "name": "headbutt",
-                "url": "https://pokeapi.co/api/v2/move/29/",
-                "level_learned_at": 16,
+                "name": "aqua-cutter",
+                "url": "https://pokeapi.co/api/v2/move/895/",
+                "level_learned_at": 23,
                 "learn_method": "level-up"
               },
               {
-                "name": "rock-polish",
-                "url": "https://pokeapi.co/api/v2/move/397/",
+                "name": "aqua-jet",
+                "url": "https://pokeapi.co/api/v2/move/453/",
                 "level_learned_at": 13,
                 "learn_method": "level-up"
               },
               {
-                "name": "rock-throw",
-                "url": "https://pokeapi.co/api/v2/move/88/",
-                "level_learned_at": 5,
+                "name": "wing-attack",
+                "url": "https://pokeapi.co/api/v2/move/17/",
+                "level_learned_at": 10,
                 "learn_method": "level-up"
               },
               {
-                "name": "tackle",
-                "url": "https://pokeapi.co/api/v2/move/33/",
+                "name": "work-up",
+                "url": "https://pokeapi.co/api/v2/move/526/",
+                "level_learned_at": 7,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "pound",
+                "url": "https://pokeapi.co/api/v2/move/1/",
                 "level_learned_at": 1,
                 "learn_method": "level-up"
               },
               {
-                "name": "harden",
-                "url": "https://pokeapi.co/api/v2/move/106/",
+                "name": "growl",
+                "url": "https://pokeapi.co/api/v2/move/45/",
                 "level_learned_at": 1,
                 "learn_method": "level-up"
               },
               {
-                "name": "salt-cure",
-                "url": "https://pokeapi.co/api/v2/move/864/",
-                "level_learned_at": 0,
+                "name": "water-gun",
+                "url": "https://pokeapi.co/api/v2/move/55/",
+                "level_learned_at": 1,
                 "learn_method": "level-up"
               },
               {
-                "name": "body-slam",
-                "url": "https://pokeapi.co/api/v2/move/34/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
+                "name": "double-hit",
+                "url": "https://pokeapi.co/api/v2/move/458/",
+                "level_learned_at": 1,
+                "learn_method": "level-up"
               },
               {
                 "name": "take-down",
@@ -762,26 +760,26 @@
                 "learn_method": "machine"
               },
               {
-                "name": "double-edge",
-                "url": "https://pokeapi.co/api/v2/move/38/",
+                "name": "hydro-pump",
+                "url": "https://pokeapi.co/api/v2/move/56/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "hyper-beam",
-                "url": "https://pokeapi.co/api/v2/move/63/",
+                "name": "surf",
+                "url": "https://pokeapi.co/api/v2/move/57/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "earthquake",
-                "url": "https://pokeapi.co/api/v2/move/89/",
+                "name": "low-kick",
+                "url": "https://pokeapi.co/api/v2/move/67/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "dig",
-                "url": "https://pokeapi.co/api/v2/move/91/",
+                "name": "swift",
+                "url": "https://pokeapi.co/api/v2/move/129/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
@@ -792,32 +790,8 @@
                 "learn_method": "machine"
               },
               {
-                "name": "rock-slide",
-                "url": "https://pokeapi.co/api/v2/move/157/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "substitute",
-                "url": "https://pokeapi.co/api/v2/move/164/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "curse",
-                "url": "https://pokeapi.co/api/v2/move/174/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
                 "name": "protect",
                 "url": "https://pokeapi.co/api/v2/move/182/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "sandstorm",
-                "url": "https://pokeapi.co/api/v2/move/201/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
@@ -828,8 +802,14 @@
                 "learn_method": "machine"
               },
               {
-                "name": "sleep-talk",
-                "url": "https://pokeapi.co/api/v2/move/214/",
+                "name": "baton-pass",
+                "url": "https://pokeapi.co/api/v2/move/226/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "encore",
+                "url": "https://pokeapi.co/api/v2/move/227/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
@@ -840,8 +820,14 @@
                 "learn_method": "machine"
               },
               {
-                "name": "sunny-day",
-                "url": "https://pokeapi.co/api/v2/move/241/",
+                "name": "psych-up",
+                "url": "https://pokeapi.co/api/v2/move/244/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "whirlpool",
+                "url": "https://pokeapi.co/api/v2/move/250/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
@@ -858,98 +844,86 @@
                 "learn_method": "machine"
               },
               {
-                "name": "iron-defense",
-                "url": "https://pokeapi.co/api/v2/move/334/",
+                "name": "feather-dance",
+                "url": "https://pokeapi.co/api/v2/move/297/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "mud-shot",
-                "url": "https://pokeapi.co/api/v2/move/341/",
+                "name": "air-cutter",
+                "url": "https://pokeapi.co/api/v2/move/314/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "power-gem",
-                "url": "https://pokeapi.co/api/v2/move/408/",
+                "name": "aerial-ace",
+                "url": "https://pokeapi.co/api/v2/move/332/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "earth-power",
-                "url": "https://pokeapi.co/api/v2/move/414/",
+                "name": "water-pulse",
+                "url": "https://pokeapi.co/api/v2/move/352/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "giga-impact",
-                "url": "https://pokeapi.co/api/v2/move/416/",
+                "name": "air-slash",
+                "url": "https://pokeapi.co/api/v2/move/403/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "zen-headbutt",
-                "url": "https://pokeapi.co/api/v2/move/428/",
+                "name": "brave-bird",
+                "url": "https://pokeapi.co/api/v2/move/413/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "flash-cannon",
-                "url": "https://pokeapi.co/api/v2/move/430/",
+                "name": "low-sweep",
+                "url": "https://pokeapi.co/api/v2/move/490/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "iron-head",
-                "url": "https://pokeapi.co/api/v2/move/442/",
+                "name": "acrobatics",
+                "url": "https://pokeapi.co/api/v2/move/512/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "stone-edge",
-                "url": "https://pokeapi.co/api/v2/move/444/",
+                "name": "water-pledge",
+                "url": "https://pokeapi.co/api/v2/move/518/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "stealth-rock",
-                "url": "https://pokeapi.co/api/v2/move/446/",
+                "name": "disarming-voice",
+                "url": "https://pokeapi.co/api/v2/move/574/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "smack-down",
-                "url": "https://pokeapi.co/api/v2/move/479/",
+                "name": "misty-terrain",
+                "url": "https://pokeapi.co/api/v2/move/581/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "heavy-slam",
-                "url": "https://pokeapi.co/api/v2/move/484/",
+                "name": "liquidation",
+                "url": "https://pokeapi.co/api/v2/move/710/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "bulldoze",
-                "url": "https://pokeapi.co/api/v2/move/523/",
+                "name": "flip-turn",
+                "url": "https://pokeapi.co/api/v2/move/812/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
               {
-                "name": "stomping-tantrum",
-                "url": "https://pokeapi.co/api/v2/move/707/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "body-press",
-                "url": "https://pokeapi.co/api/v2/move/776/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "meteor-beam",
-                "url": "https://pokeapi.co/api/v2/move/800/",
+                "name": "triple-axel",
+                "url": "https://pokeapi.co/api/v2/move/813/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
               },
@@ -958,48 +932,54 @@
                 "url": "https://pokeapi.co/api/v2/move/851/",
                 "level_learned_at": 0,
                 "learn_method": "machine"
+              },
+              {
+                "name": "chilling-water",
+                "url": "https://pokeapi.co/api/v2/move/886/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
               }
             ],
-            "name": "naclstack",
-            "order": 964,
+            "name": "quaxwell",
+            "order": 913,
             "past_abilities": [],
             "past_types": [],
             "species": {
-              "name": "naclstack",
-              "url": "https://pokeapi.co/api/v2/pokemon-species/933/"
+              "name": "quaxwell",
+              "url": "https://pokeapi.co/api/v2/pokemon-species/913/"
             },
             "sprites": {
               "back_default": null,
               "back_female": null,
               "back_shiny": null,
               "back_shiny_female": null,
-              "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/933.png",
+              "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/913.png",
               "front_female": null,
-              "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/933.png",
+              "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/913.png",
               "front_shiny_female": null,
               "other": {
                 "dream_world": {
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/933.svg",
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/913.svg",
                   "front_female": null
                 },
                 "home": {
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/933.png",
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/913.png",
                   "front_female": null,
-                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/933.png",
+                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/913.png",
                   "front_shiny_female": null
                 },
                 "official-artwork": {
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/933.png",
-                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/933.png"
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/913.png",
+                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/913.png"
                 },
                 "showdown": {
-                  "back_default": null,
+                  "back_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/913.gif",
                   "back_female": null,
-                  "back_shiny": null,
+                  "back_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/shiny/913.gif",
                   "back_shiny_female": null,
-                  "front_default": null,
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/913.gif",
                   "front_female": null,
-                  "front_shiny": null,
+                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/913.gif",
                   "front_shiny_female": null
                 }
               },
@@ -1100,7 +1080,7 @@
                 },
                 "generation-ix": {
                   "scarlet-violet": {
-                    "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/scarlet-violet/933.png",
+                    "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/scarlet-violet/913.png",
                     "front_female": null
                   }
                 },
@@ -1166,7 +1146,7 @@
             },
             "stats": [
               {
-                "base_stat": 60,
+                "base_stat": 70,
                 "effort": 0,
                 "stat": {
                   "name": "hp",
@@ -1174,23 +1154,23 @@
                 }
               },
               {
-                "base_stat": 60,
-                "effort": 0,
+                "base_stat": 85,
+                "effort": 2,
                 "stat": {
                   "name": "attack",
                   "url": "https://pokeapi.co/api/v2/stat/2/"
                 }
               },
               {
-                "base_stat": 100,
-                "effort": 2,
+                "base_stat": 65,
+                "effort": 0,
                 "stat": {
                   "name": "defense",
                   "url": "https://pokeapi.co/api/v2/stat/3/"
                 }
               },
               {
-                "base_stat": 35,
+                "base_stat": 65,
                 "effort": 0,
                 "stat": {
                   "name": "special-attack",
@@ -1198,7 +1178,7 @@
                 }
               },
               {
-                "base_stat": 65,
+                "base_stat": 60,
                 "effort": 0,
                 "stat": {
                   "name": "special-defense",
@@ -1206,7 +1186,7 @@
                 }
               },
               {
-                "base_stat": 35,
+                "base_stat": 65,
                 "effort": 0,
                 "stat": {
                   "name": "speed",
@@ -1218,29 +1198,29 @@
               {
                 "slot": 1,
                 "type": {
-                  "name": "rock",
-                  "url": "https://pokeapi.co/api/v2/type/6/"
+                  "name": "water",
+                  "url": "https://pokeapi.co/api/v2/type/11/"
                 }
               }
             ],
-            "weight": 1050,
-            "speciesUrl": "https://pokeapi.co/api/v2/pokemon-species/933/"
+            "weight": 215,
+            "speciesUrl": "https://pokeapi.co/api/v2/pokemon-species/913/"
           },
-          "selectedAbility": "sturdy",
-          "abilityDescription": "Prevents being KOed from full HP, leaving 1 HP instead.  Protects against the one-hit KO moves regardless of HP.",
-          "teraType": "rock",
-          "heldItem": "Hard Stone",
-          "heldItemDescription": "Held: Rock-Type moves from holder do 20% more damage.",
-          "level": 27,
+          "selectedAbility": "torrent",
+          "abilityDescription": "Strengthens water moves to inflict 1.5× damage at 1/3 max HP or less.",
+          "teraType": "water",
+          "heldItem": "Mystic Water",
+          "heldItemDescription": "Held: Water-Type moves from holder do 20% more damage.",
+          "level": 30,
           "loading": false,
           "error": null,
           "customName": "",
           "locked": true,
           "evolutionDetails": {
             "isFullyEvolved": false,
-            "nextEvolutionName": "garganacl",
-            "minLevel": 38,
-            "triggerCondition": "Level 38"
+            "nextEvolutionName": "quaquaval",
+            "minLevel": 36,
+            "triggerCondition": "Level 36"
           }
         },
         {
@@ -1927,7 +1907,7 @@
           "teraType": "fire",
           "heldItem": "Sharp Beak",
           "heldItemDescription": "Held: Flying-Type moves from holder do 20% more damage.",
-          "level": 27,
+          "level": 29,
           "loading": false,
           "error": null,
           "customName": "",
@@ -2963,18 +2943,607 @@
             "speciesUrl": "https://pokeapi.co/api/v2/pokemon-species/50/"
           },
           "selectedAbility": "sand-veil",
-          "abilityDescription": "",
+          "abilityDescription": "Increases evasion to 1.25× during a sandstorm.  Protects against sandstorm damage.",
           "teraType": "ground",
           "heldItem": "",
           "heldItemDescription": "",
-          "level": 20,
+          "level": 23,
           "loading": false,
           "error": null,
           "customName": "",
-          "locked": true
+          "locked": true,
+          "evolutionDetails": {
+            "isFullyEvolved": false,
+            "nextEvolutionName": "dugtrio",
+            "minLevel": 26,
+            "triggerCondition": "Level 26"
+          }
         },
         {
           "id": "slot-4",
+          "data": {
+            "abilities": [
+              {
+                "ability": {
+                  "name": "purifying-salt",
+                  "url": "https://pokeapi.co/api/v2/ability/272/"
+                },
+                "is_hidden": false,
+                "slot": 1
+              },
+              {
+                "ability": {
+                  "name": "sturdy",
+                  "url": "https://pokeapi.co/api/v2/ability/5/"
+                },
+                "is_hidden": false,
+                "slot": 2
+              },
+              {
+                "ability": {
+                  "name": "clear-body",
+                  "url": "https://pokeapi.co/api/v2/ability/29/"
+                },
+                "is_hidden": true,
+                "slot": 3
+              }
+            ],
+            "base_experience": 124,
+            "cries": {
+              "latest": "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/933.ogg",
+              "legacy": null
+            },
+            "forms": [
+              {
+                "name": "naclstack",
+                "url": "https://pokeapi.co/api/v2/pokemon-form/933/"
+              }
+            ],
+            "game_indices": [],
+            "height": 6,
+            "held_items": [],
+            "id": 933,
+            "is_default": true,
+            "location_area_encounters": "https://pokeapi.co/api/v2/pokemon/933/encounters",
+            "moves": [
+              {
+                "name": "recover",
+                "url": "https://pokeapi.co/api/v2/move/105/",
+                "level_learned_at": 30,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "headbutt",
+                "url": "https://pokeapi.co/api/v2/move/29/",
+                "level_learned_at": 16,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "rock-polish",
+                "url": "https://pokeapi.co/api/v2/move/397/",
+                "level_learned_at": 13,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "rock-throw",
+                "url": "https://pokeapi.co/api/v2/move/88/",
+                "level_learned_at": 5,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "tackle",
+                "url": "https://pokeapi.co/api/v2/move/33/",
+                "level_learned_at": 1,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "harden",
+                "url": "https://pokeapi.co/api/v2/move/106/",
+                "level_learned_at": 1,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "salt-cure",
+                "url": "https://pokeapi.co/api/v2/move/864/",
+                "level_learned_at": 0,
+                "learn_method": "level-up"
+              },
+              {
+                "name": "body-slam",
+                "url": "https://pokeapi.co/api/v2/move/34/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "take-down",
+                "url": "https://pokeapi.co/api/v2/move/36/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "double-edge",
+                "url": "https://pokeapi.co/api/v2/move/38/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "hyper-beam",
+                "url": "https://pokeapi.co/api/v2/move/63/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "earthquake",
+                "url": "https://pokeapi.co/api/v2/move/89/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "dig",
+                "url": "https://pokeapi.co/api/v2/move/91/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "rest",
+                "url": "https://pokeapi.co/api/v2/move/156/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "rock-slide",
+                "url": "https://pokeapi.co/api/v2/move/157/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "substitute",
+                "url": "https://pokeapi.co/api/v2/move/164/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "curse",
+                "url": "https://pokeapi.co/api/v2/move/174/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "protect",
+                "url": "https://pokeapi.co/api/v2/move/182/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "sandstorm",
+                "url": "https://pokeapi.co/api/v2/move/201/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "endure",
+                "url": "https://pokeapi.co/api/v2/move/203/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "sleep-talk",
+                "url": "https://pokeapi.co/api/v2/move/214/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "rain-dance",
+                "url": "https://pokeapi.co/api/v2/move/240/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "sunny-day",
+                "url": "https://pokeapi.co/api/v2/move/241/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "facade",
+                "url": "https://pokeapi.co/api/v2/move/263/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "helping-hand",
+                "url": "https://pokeapi.co/api/v2/move/270/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "iron-defense",
+                "url": "https://pokeapi.co/api/v2/move/334/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "mud-shot",
+                "url": "https://pokeapi.co/api/v2/move/341/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "power-gem",
+                "url": "https://pokeapi.co/api/v2/move/408/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "earth-power",
+                "url": "https://pokeapi.co/api/v2/move/414/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "giga-impact",
+                "url": "https://pokeapi.co/api/v2/move/416/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "zen-headbutt",
+                "url": "https://pokeapi.co/api/v2/move/428/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "flash-cannon",
+                "url": "https://pokeapi.co/api/v2/move/430/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "iron-head",
+                "url": "https://pokeapi.co/api/v2/move/442/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "stone-edge",
+                "url": "https://pokeapi.co/api/v2/move/444/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "stealth-rock",
+                "url": "https://pokeapi.co/api/v2/move/446/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "smack-down",
+                "url": "https://pokeapi.co/api/v2/move/479/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "heavy-slam",
+                "url": "https://pokeapi.co/api/v2/move/484/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "bulldoze",
+                "url": "https://pokeapi.co/api/v2/move/523/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "stomping-tantrum",
+                "url": "https://pokeapi.co/api/v2/move/707/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "body-press",
+                "url": "https://pokeapi.co/api/v2/move/776/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "meteor-beam",
+                "url": "https://pokeapi.co/api/v2/move/800/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              },
+              {
+                "name": "tera-blast",
+                "url": "https://pokeapi.co/api/v2/move/851/",
+                "level_learned_at": 0,
+                "learn_method": "machine"
+              }
+            ],
+            "name": "naclstack",
+            "order": 964,
+            "past_abilities": [],
+            "past_types": [],
+            "species": {
+              "name": "naclstack",
+              "url": "https://pokeapi.co/api/v2/pokemon-species/933/"
+            },
+            "sprites": {
+              "back_default": null,
+              "back_female": null,
+              "back_shiny": null,
+              "back_shiny_female": null,
+              "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/933.png",
+              "front_female": null,
+              "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/933.png",
+              "front_shiny_female": null,
+              "other": {
+                "dream_world": {
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/933.svg",
+                  "front_female": null
+                },
+                "home": {
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/933.png",
+                  "front_female": null,
+                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/933.png",
+                  "front_shiny_female": null
+                },
+                "official-artwork": {
+                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/933.png",
+                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/933.png"
+                },
+                "showdown": {
+                  "back_default": null,
+                  "back_female": null,
+                  "back_shiny": null,
+                  "back_shiny_female": null,
+                  "front_default": null,
+                  "front_female": null,
+                  "front_shiny": null,
+                  "front_shiny_female": null
+                }
+              },
+              "versions": {
+                "generation-i": {
+                  "red-blue": {
+                    "back_default": null,
+                    "back_gray": null,
+                    "back_transparent": null,
+                    "front_default": null,
+                    "front_gray": null,
+                    "front_transparent": null
+                  },
+                  "yellow": {
+                    "back_default": null,
+                    "back_gray": null,
+                    "back_transparent": null,
+                    "front_default": null,
+                    "front_gray": null,
+                    "front_transparent": null
+                  }
+                },
+                "generation-ii": {
+                  "crystal": {
+                    "back_default": null,
+                    "back_shiny": null,
+                    "back_shiny_transparent": null,
+                    "back_transparent": null,
+                    "front_default": null,
+                    "front_shiny": null,
+                    "front_shiny_transparent": null,
+                    "front_transparent": null
+                  },
+                  "gold": {
+                    "back_default": null,
+                    "back_shiny": null,
+                    "front_default": null,
+                    "front_shiny": null,
+                    "front_transparent": null
+                  },
+                  "silver": {
+                    "back_default": null,
+                    "back_shiny": null,
+                    "front_default": null,
+                    "front_shiny": null,
+                    "front_transparent": null
+                  }
+                },
+                "generation-iii": {
+                  "emerald": {
+                    "front_default": null,
+                    "front_shiny": null
+                  },
+                  "firered-leafgreen": {
+                    "back_default": null,
+                    "back_shiny": null,
+                    "front_default": null,
+                    "front_shiny": null
+                  },
+                  "ruby-sapphire": {
+                    "back_default": null,
+                    "back_shiny": null,
+                    "front_default": null,
+                    "front_shiny": null
+                  }
+                },
+                "generation-iv": {
+                  "diamond-pearl": {
+                    "back_default": null,
+                    "back_female": null,
+                    "back_shiny": null,
+                    "back_shiny_female": null,
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  },
+                  "heartgold-soulsilver": {
+                    "back_default": null,
+                    "back_female": null,
+                    "back_shiny": null,
+                    "back_shiny_female": null,
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  },
+                  "platinum": {
+                    "back_default": null,
+                    "back_female": null,
+                    "back_shiny": null,
+                    "back_shiny_female": null,
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  }
+                },
+                "generation-ix": {
+                  "scarlet-violet": {
+                    "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/scarlet-violet/933.png",
+                    "front_female": null
+                  }
+                },
+                "generation-v": {
+                  "black-white": {
+                    "animated": {
+                      "back_default": null,
+                      "back_female": null,
+                      "back_shiny": null,
+                      "back_shiny_female": null,
+                      "front_default": null,
+                      "front_female": null,
+                      "front_shiny": null,
+                      "front_shiny_female": null
+                    },
+                    "back_default": null,
+                    "back_female": null,
+                    "back_shiny": null,
+                    "back_shiny_female": null,
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  }
+                },
+                "generation-vi": {
+                  "omegaruby-alphasapphire": {
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  },
+                  "x-y": {
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  }
+                },
+                "generation-vii": {
+                  "icons": {
+                    "front_default": null,
+                    "front_female": null
+                  },
+                  "ultra-sun-ultra-moon": {
+                    "front_default": null,
+                    "front_female": null,
+                    "front_shiny": null,
+                    "front_shiny_female": null
+                  }
+                },
+                "generation-viii": {
+                  "brilliant-diamond-shining-pearl": {
+                    "front_default": null,
+                    "front_female": null
+                  },
+                  "icons": {
+                    "front_default": null,
+                    "front_female": null
+                  }
+                }
+              }
+            },
+            "stats": [
+              {
+                "base_stat": 60,
+                "effort": 0,
+                "stat": {
+                  "name": "hp",
+                  "url": "https://pokeapi.co/api/v2/stat/1/"
+                }
+              },
+              {
+                "base_stat": 60,
+                "effort": 0,
+                "stat": {
+                  "name": "attack",
+                  "url": "https://pokeapi.co/api/v2/stat/2/"
+                }
+              },
+              {
+                "base_stat": 100,
+                "effort": 2,
+                "stat": {
+                  "name": "defense",
+                  "url": "https://pokeapi.co/api/v2/stat/3/"
+                }
+              },
+              {
+                "base_stat": 35,
+                "effort": 0,
+                "stat": {
+                  "name": "special-attack",
+                  "url": "https://pokeapi.co/api/v2/stat/4/"
+                }
+              },
+              {
+                "base_stat": 65,
+                "effort": 0,
+                "stat": {
+                  "name": "special-defense",
+                  "url": "https://pokeapi.co/api/v2/stat/5/"
+                }
+              },
+              {
+                "base_stat": 35,
+                "effort": 0,
+                "stat": {
+                  "name": "speed",
+                  "url": "https://pokeapi.co/api/v2/stat/6/"
+                }
+              }
+            ],
+            "types": [
+              {
+                "slot": 1,
+                "type": {
+                  "name": "rock",
+                  "url": "https://pokeapi.co/api/v2/type/6/"
+                }
+              }
+            ],
+            "weight": 1050,
+            "speciesUrl": "https://pokeapi.co/api/v2/pokemon-species/933/"
+          },
+          "selectedAbility": "sturdy",
+          "abilityDescription": "Prevents being KOed from full HP, leaving 1 HP instead.  Protects against the one-hit KO moves regardless of HP.",
+          "teraType": "rock",
+          "heldItem": "Hard Stone",
+          "heldItemDescription": "Held: Rock-Type moves from holder do 20% more damage.",
+          "level": 28,
+          "loading": false,
+          "error": null,
+          "customName": "",
+          "locked": true,
+          "evolutionDetails": {
+            "isFullyEvolved": false,
+            "nextEvolutionName": "garganacl",
+            "minLevel": 38,
+            "triggerCondition": "Level 38"
+          }
+        },
+        {
+          "id": "slot-5",
           "data": {
             "abilities": [
               {
@@ -3741,568 +4310,14 @@
           "teraType": "bug",
           "heldItem": "Wise Glasses",
           "heldItemDescription": "Held: Boosts the damage of special moves used by the holder by 1/10 (10%).",
-          "level": 26,
+          "level": 27,
           "loading": false,
           "error": null,
           "customName": "",
-          "locked": true
-        },
-        {
-          "id": "slot-5",
-          "data": {
-            "abilities": [
-              {
-                "ability": {
-                  "name": "torrent",
-                  "url": "https://pokeapi.co/api/v2/ability/67/"
-                },
-                "is_hidden": false,
-                "slot": 1
-              },
-              {
-                "ability": {
-                  "name": "moxie",
-                  "url": "https://pokeapi.co/api/v2/ability/153/"
-                },
-                "is_hidden": true,
-                "slot": 3
-              }
-            ],
-            "base_experience": 144,
-            "cries": {
-              "latest": "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/913.ogg",
-              "legacy": null
-            },
-            "forms": [
-              {
-                "name": "quaxwell",
-                "url": "https://pokeapi.co/api/v2/pokemon-form/913/"
-              }
-            ],
-            "game_indices": [],
-            "height": 12,
-            "held_items": [],
-            "id": 913,
-            "is_default": true,
-            "location_area_encounters": "https://pokeapi.co/api/v2/pokemon/913/encounters",
-            "moves": [
-              {
-                "name": "focus-energy",
-                "url": "https://pokeapi.co/api/v2/move/116/",
-                "level_learned_at": 32,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "aqua-cutter",
-                "url": "https://pokeapi.co/api/v2/move/895/",
-                "level_learned_at": 23,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "aqua-jet",
-                "url": "https://pokeapi.co/api/v2/move/453/",
-                "level_learned_at": 13,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "wing-attack",
-                "url": "https://pokeapi.co/api/v2/move/17/",
-                "level_learned_at": 10,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "work-up",
-                "url": "https://pokeapi.co/api/v2/move/526/",
-                "level_learned_at": 7,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "pound",
-                "url": "https://pokeapi.co/api/v2/move/1/",
-                "level_learned_at": 1,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "growl",
-                "url": "https://pokeapi.co/api/v2/move/45/",
-                "level_learned_at": 1,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "water-gun",
-                "url": "https://pokeapi.co/api/v2/move/55/",
-                "level_learned_at": 1,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "double-hit",
-                "url": "https://pokeapi.co/api/v2/move/458/",
-                "level_learned_at": 1,
-                "learn_method": "level-up"
-              },
-              {
-                "name": "take-down",
-                "url": "https://pokeapi.co/api/v2/move/36/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "hydro-pump",
-                "url": "https://pokeapi.co/api/v2/move/56/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "surf",
-                "url": "https://pokeapi.co/api/v2/move/57/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "low-kick",
-                "url": "https://pokeapi.co/api/v2/move/67/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "swift",
-                "url": "https://pokeapi.co/api/v2/move/129/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "rest",
-                "url": "https://pokeapi.co/api/v2/move/156/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "protect",
-                "url": "https://pokeapi.co/api/v2/move/182/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "endure",
-                "url": "https://pokeapi.co/api/v2/move/203/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "baton-pass",
-                "url": "https://pokeapi.co/api/v2/move/226/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "encore",
-                "url": "https://pokeapi.co/api/v2/move/227/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "rain-dance",
-                "url": "https://pokeapi.co/api/v2/move/240/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "psych-up",
-                "url": "https://pokeapi.co/api/v2/move/244/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "whirlpool",
-                "url": "https://pokeapi.co/api/v2/move/250/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "facade",
-                "url": "https://pokeapi.co/api/v2/move/263/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "helping-hand",
-                "url": "https://pokeapi.co/api/v2/move/270/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "feather-dance",
-                "url": "https://pokeapi.co/api/v2/move/297/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "air-cutter",
-                "url": "https://pokeapi.co/api/v2/move/314/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "aerial-ace",
-                "url": "https://pokeapi.co/api/v2/move/332/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "water-pulse",
-                "url": "https://pokeapi.co/api/v2/move/352/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "air-slash",
-                "url": "https://pokeapi.co/api/v2/move/403/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "brave-bird",
-                "url": "https://pokeapi.co/api/v2/move/413/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "low-sweep",
-                "url": "https://pokeapi.co/api/v2/move/490/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "acrobatics",
-                "url": "https://pokeapi.co/api/v2/move/512/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "water-pledge",
-                "url": "https://pokeapi.co/api/v2/move/518/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "disarming-voice",
-                "url": "https://pokeapi.co/api/v2/move/574/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "misty-terrain",
-                "url": "https://pokeapi.co/api/v2/move/581/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "liquidation",
-                "url": "https://pokeapi.co/api/v2/move/710/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "flip-turn",
-                "url": "https://pokeapi.co/api/v2/move/812/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "triple-axel",
-                "url": "https://pokeapi.co/api/v2/move/813/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "tera-blast",
-                "url": "https://pokeapi.co/api/v2/move/851/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              },
-              {
-                "name": "chilling-water",
-                "url": "https://pokeapi.co/api/v2/move/886/",
-                "level_learned_at": 0,
-                "learn_method": "machine"
-              }
-            ],
-            "name": "quaxwell",
-            "order": 913,
-            "past_abilities": [],
-            "past_types": [],
-            "species": {
-              "name": "quaxwell",
-              "url": "https://pokeapi.co/api/v2/pokemon-species/913/"
-            },
-            "sprites": {
-              "back_default": null,
-              "back_female": null,
-              "back_shiny": null,
-              "back_shiny_female": null,
-              "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/913.png",
-              "front_female": null,
-              "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/913.png",
-              "front_shiny_female": null,
-              "other": {
-                "dream_world": {
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/913.svg",
-                  "front_female": null
-                },
-                "home": {
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/913.png",
-                  "front_female": null,
-                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/913.png",
-                  "front_shiny_female": null
-                },
-                "official-artwork": {
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/913.png",
-                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/913.png"
-                },
-                "showdown": {
-                  "back_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/913.gif",
-                  "back_female": null,
-                  "back_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/shiny/913.gif",
-                  "back_shiny_female": null,
-                  "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/913.gif",
-                  "front_female": null,
-                  "front_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/913.gif",
-                  "front_shiny_female": null
-                }
-              },
-              "versions": {
-                "generation-i": {
-                  "red-blue": {
-                    "back_default": null,
-                    "back_gray": null,
-                    "back_transparent": null,
-                    "front_default": null,
-                    "front_gray": null,
-                    "front_transparent": null
-                  },
-                  "yellow": {
-                    "back_default": null,
-                    "back_gray": null,
-                    "back_transparent": null,
-                    "front_default": null,
-                    "front_gray": null,
-                    "front_transparent": null
-                  }
-                },
-                "generation-ii": {
-                  "crystal": {
-                    "back_default": null,
-                    "back_shiny": null,
-                    "back_shiny_transparent": null,
-                    "back_transparent": null,
-                    "front_default": null,
-                    "front_shiny": null,
-                    "front_shiny_transparent": null,
-                    "front_transparent": null
-                  },
-                  "gold": {
-                    "back_default": null,
-                    "back_shiny": null,
-                    "front_default": null,
-                    "front_shiny": null,
-                    "front_transparent": null
-                  },
-                  "silver": {
-                    "back_default": null,
-                    "back_shiny": null,
-                    "front_default": null,
-                    "front_shiny": null,
-                    "front_transparent": null
-                  }
-                },
-                "generation-iii": {
-                  "emerald": {
-                    "front_default": null,
-                    "front_shiny": null
-                  },
-                  "firered-leafgreen": {
-                    "back_default": null,
-                    "back_shiny": null,
-                    "front_default": null,
-                    "front_shiny": null
-                  },
-                  "ruby-sapphire": {
-                    "back_default": null,
-                    "back_shiny": null,
-                    "front_default": null,
-                    "front_shiny": null
-                  }
-                },
-                "generation-iv": {
-                  "diamond-pearl": {
-                    "back_default": null,
-                    "back_female": null,
-                    "back_shiny": null,
-                    "back_shiny_female": null,
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  },
-                  "heartgold-soulsilver": {
-                    "back_default": null,
-                    "back_female": null,
-                    "back_shiny": null,
-                    "back_shiny_female": null,
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  },
-                  "platinum": {
-                    "back_default": null,
-                    "back_female": null,
-                    "back_shiny": null,
-                    "back_shiny_female": null,
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  }
-                },
-                "generation-ix": {
-                  "scarlet-violet": {
-                    "front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ix/scarlet-violet/913.png",
-                    "front_female": null
-                  }
-                },
-                "generation-v": {
-                  "black-white": {
-                    "animated": {
-                      "back_default": null,
-                      "back_female": null,
-                      "back_shiny": null,
-                      "back_shiny_female": null,
-                      "front_default": null,
-                      "front_female": null,
-                      "front_shiny": null,
-                      "front_shiny_female": null
-                    },
-                    "back_default": null,
-                    "back_female": null,
-                    "back_shiny": null,
-                    "back_shiny_female": null,
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  }
-                },
-                "generation-vi": {
-                  "omegaruby-alphasapphire": {
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  },
-                  "x-y": {
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  }
-                },
-                "generation-vii": {
-                  "icons": {
-                    "front_default": null,
-                    "front_female": null
-                  },
-                  "ultra-sun-ultra-moon": {
-                    "front_default": null,
-                    "front_female": null,
-                    "front_shiny": null,
-                    "front_shiny_female": null
-                  }
-                },
-                "generation-viii": {
-                  "brilliant-diamond-shining-pearl": {
-                    "front_default": null,
-                    "front_female": null
-                  },
-                  "icons": {
-                    "front_default": null,
-                    "front_female": null
-                  }
-                }
-              }
-            },
-            "stats": [
-              {
-                "base_stat": 70,
-                "effort": 0,
-                "stat": {
-                  "name": "hp",
-                  "url": "https://pokeapi.co/api/v2/stat/1/"
-                }
-              },
-              {
-                "base_stat": 85,
-                "effort": 2,
-                "stat": {
-                  "name": "attack",
-                  "url": "https://pokeapi.co/api/v2/stat/2/"
-                }
-              },
-              {
-                "base_stat": 65,
-                "effort": 0,
-                "stat": {
-                  "name": "defense",
-                  "url": "https://pokeapi.co/api/v2/stat/3/"
-                }
-              },
-              {
-                "base_stat": 65,
-                "effort": 0,
-                "stat": {
-                  "name": "special-attack",
-                  "url": "https://pokeapi.co/api/v2/stat/4/"
-                }
-              },
-              {
-                "base_stat": 60,
-                "effort": 0,
-                "stat": {
-                  "name": "special-defense",
-                  "url": "https://pokeapi.co/api/v2/stat/5/"
-                }
-              },
-              {
-                "base_stat": 65,
-                "effort": 0,
-                "stat": {
-                  "name": "speed",
-                  "url": "https://pokeapi.co/api/v2/stat/6/"
-                }
-              }
-            ],
-            "types": [
-              {
-                "slot": 1,
-                "type": {
-                  "name": "water",
-                  "url": "https://pokeapi.co/api/v2/type/11/"
-                }
-              }
-            ],
-            "weight": 215,
-            "speciesUrl": "https://pokeapi.co/api/v2/pokemon-species/913/"
-          },
-          "selectedAbility": "torrent",
-          "abilityDescription": "",
-          "teraType": "water",
-          "heldItem": "Mystic Water",
-          "heldItemDescription": "Held: Water-Type moves from holder do 20% more damage.",
-          "level": 29,
-          "loading": false,
-          "error": null,
-          "customName": "",
-          "locked": true
+          "locked": true,
+          "evolutionDetails": {
+            "isFullyEvolved": true
+          }
         }
       ],
       "caughtPokemon": [
@@ -4381,9 +4396,11 @@
         "komala",
         "litleo",
         "tauros",
-        "skiploom"
+        "skiploom",
+        "dunsparce",
+        "shellder"
       ],
-      "lastUpdated": 1766066882333
+      "lastUpdated": 1766070517170
     },
     "204ef495-6a96-4a91-a80e-e2b61e0c85e0": {
       "id": "204ef495-6a96-4a91-a80e-e2b61e0c85e0",

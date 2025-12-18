@@ -4,7 +4,7 @@ import AnalysisSection from "./components/AnalysisSection";
 import PokedexView from "./components/PokedexView";
 import ProfileManager from "./components/ProfileManager";
 import { TeamMember, Profile, ProfilesState } from "./types";
-import { fetchPokemon } from "./services/pokeApi";
+import { fetchPokemon, fetchEvolutionInfo } from "./services/pokeApi";
 import { generateBestTeam } from "./utils/teamOptimizer";
 import { Save, Upload, LayoutGrid, Users } from "lucide-react";
 
@@ -112,6 +112,49 @@ const App: React.FC = () => {
 
     return () => clearTimeout(saveTimeout);
   }, [profiles, activeProfileId, isLoaded]);
+
+  // Hydrate evolution info for team members that are missing it
+  useEffect(() => {
+    if (!isLoaded || !activeProfile) return;
+
+    const hydrateEvolutionInfo = async () => {
+      const updatedTeam = await Promise.all(
+        team.map(async (member) => {
+          // Skip if no data or if evolution details already exist
+          if (!member.data || member.evolutionDetails) {
+            return member;
+          }
+
+          try {
+            const evoInfo = await fetchEvolutionInfo(
+              member.data.speciesUrl,
+              member.data.name
+            );
+            return { ...member, evolutionDetails: evoInfo };
+          } catch (e) {
+            console.error("Failed to hydrate evolution info:", e);
+            return {
+              ...member,
+              evolutionDetails: {
+                isFullyEvolved: true,
+                error: "Failed to load",
+              },
+            };
+          }
+        })
+      );
+
+      // Only update if something changed
+      const hasChanges = updatedTeam.some(
+        (m, i) => m.evolutionDetails !== team[i].evolutionDetails
+      );
+      if (hasChanges) {
+        updateActiveProfile({ team: updatedTeam });
+      }
+    };
+
+    hydrateEvolutionInfo();
+  }, [isLoaded, activeProfileId]); // Re-run when profile changes
 
   // --- Profile Management ---
   const updateActiveProfile = (updates: Partial<Profile>) => {
