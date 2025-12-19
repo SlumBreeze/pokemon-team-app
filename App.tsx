@@ -7,7 +7,14 @@ import PokemonFinder from "./components/PokemonFinder";
 import { TeamMember, Profile, ProfilesState } from "./types";
 import { fetchPokemon, fetchEvolutionInfo } from "./services/pokeApi";
 import { generateBestTeam } from "./utils/teamOptimizer";
-import { Save, Upload, LayoutGrid, Users, MapPin } from "lucide-react";
+import {
+  Save,
+  Upload,
+  LayoutGrid,
+  Users,
+  MapPin,
+  CheckCircle,
+} from "lucide-react";
 
 const generateId = () => {
   try {
@@ -52,8 +59,11 @@ const App: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // --- Global State ---
-  const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder">("builder");
+  const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder">(
+    "builder"
+  );
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
+  const [isRearranging, setIsRearranging] = useState(false);
   const [targetBossType, setTargetBossType] = useState<string | undefined>(
     undefined
   );
@@ -105,7 +115,7 @@ const App: React.FC = () => {
         const state: ProfilesState = {
           activeProfileId,
           profiles,
-          globalCaughtPokemon
+          globalCaughtPokemon,
         };
         await fetch("/api/profiles", {
           method: "POST",
@@ -173,7 +183,11 @@ const App: React.FC = () => {
 
     // Check all profiles for legacy caught lists
     Object.values(profiles).forEach((p: any) => {
-      if (p.caughtPokemon && Array.isArray(p.caughtPokemon) && p.caughtPokemon.length > 0) {
+      if (
+        p.caughtPokemon &&
+        Array.isArray(p.caughtPokemon) &&
+        p.caughtPokemon.length > 0
+      ) {
         p.caughtPokemon.forEach((name: string) => allCaught.add(name));
         hasLegacyData = true;
       }
@@ -185,9 +199,9 @@ const App: React.FC = () => {
       setGlobalCaughtPokemon(mergedList);
 
       // Clean up legacy data from ALL profiles in the state
-      setProfiles(prev => {
+      setProfiles((prev) => {
         const next = { ...prev };
-        Object.keys(next).forEach(id => {
+        Object.keys(next).forEach((id) => {
           const p = { ...next[id] };
           if ((p as any).caughtPokemon) {
             delete (p as any).caughtPokemon;
@@ -302,22 +316,35 @@ const App: React.FC = () => {
       prev.map((member, i) =>
         i === index
           ? {
-            ...member,
-            data: null,
-            selectedAbility: "",
-            abilityDescription: "",
-            teraType: "",
-            heldItem: "",
-            heldItemDescription: "",
-            level: 20,
-            loading: false,
-            error: null,
-            customName: "",
-            locked: false,
-          }
+              ...member,
+              data: null,
+              selectedAbility: "",
+              abilityDescription: "",
+              teraType: "",
+              heldItem: "",
+              heldItemDescription: "",
+              level: 20,
+              loading: false,
+              error: null,
+              customName: "",
+              locked: false,
+            }
           : member
       )
     );
+  };
+
+  const moveMember = (index: number, direction: "left" | "right") => {
+    const newIndex = direction === "left" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex > 5) return;
+
+    setTeam((prev) => {
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[newIndex];
+      next[newIndex] = temp;
+      return next;
+    });
   };
 
   // --- Pokedex Logic ---
@@ -390,7 +417,11 @@ const App: React.FC = () => {
 
   // --- Save System ---
   const handleExport = () => {
-    const data = JSON.stringify({ team, globalCaughtPokemon: caughtPokemon }, null, 2);
+    const data = JSON.stringify(
+      { team, globalCaughtPokemon: caughtPokemon },
+      null,
+      2
+    );
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -415,7 +446,10 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (parsed.team && Array.isArray(parsed.team)) setTeam(parsed.team);
-        if (parsed.globalCaughtPokemon && Array.isArray(parsed.globalCaughtPokemon))
+        if (
+          parsed.globalCaughtPokemon &&
+          Array.isArray(parsed.globalCaughtPokemon)
+        )
           setGlobalCaughtPokemon(parsed.globalCaughtPokemon);
         else if (parsed.caughtPokemon && Array.isArray(parsed.caughtPokemon))
           setGlobalCaughtPokemon(parsed.caughtPokemon); // Legacy support
@@ -431,12 +465,16 @@ const App: React.FC = () => {
 
   const handleExportPokedex = () => {
     if (globalCaughtPokemon.length === 0) return;
-    const data = JSON.stringify({
-      trainer: "Paldea Trainer",
-      exportDate: new Date().toISOString(),
-      pokedexCount: globalCaughtPokemon.length,
-      caughtPokemon: globalCaughtPokemon
-    }, null, 2);
+    const data = JSON.stringify(
+      {
+        trainer: "Paldea Trainer",
+        exportDate: new Date().toISOString(),
+        pokedexCount: globalCaughtPokemon.length,
+        caughtPokemon: globalCaughtPokemon,
+      },
+      null,
+      2
+    );
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -479,28 +517,31 @@ const App: React.FC = () => {
             <div className="flex bg-gray-100 rounded-full p-1 border-2 border-black shadow-md">
               <button
                 onClick={() => setActiveTab("builder")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "builder"
-                  ? "bg-scarlet text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
-                  }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+                  activeTab === "builder"
+                    ? "bg-scarlet text-white shadow-md"
+                    : "text-gray-500 hover:text-black hover:bg-gray-200"
+                }`}
               >
                 <Users size={16} /> Team Builder
               </button>
               <button
                 onClick={() => setActiveTab("pokedex")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "pokedex"
-                  ? "bg-black text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
-                  }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+                  activeTab === "pokedex"
+                    ? "bg-black text-white shadow-md"
+                    : "text-gray-500 hover:text-black hover:bg-gray-200"
+                }`}
               >
                 <LayoutGrid size={16} /> My Pokedex
               </button>
               <button
                 onClick={() => setActiveTab("finder")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "finder"
-                  ? "bg-scarlet text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
-                  }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
+                  activeTab === "finder"
+                    ? "bg-scarlet text-white shadow-md"
+                    : "text-gray-500 hover:text-black hover:bg-gray-200"
+                }`}
               >
                 <MapPin size={16} /> Locations
               </button>
@@ -542,10 +583,32 @@ const App: React.FC = () => {
         {activeTab === "builder" && (
           <div className="animate-in slide-in-from-left-4 duration-300">
             <div className="mb-6">
-              <h2 className="text-xl font-bold mb-4 text-white uppercase tracking-wide flex items-center gap-2 drop-shadow-md">
-                <span className="w-2 h-8 bg-black rounded-full inline-block"></span>
-                Current Team
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <h2 className="text-xl font-bold text-white uppercase tracking-wide flex items-center gap-2 drop-shadow-md">
+                  <span className="w-2 h-8 bg-black rounded-full inline-block"></span>
+                  Current Team
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsRearranging(!isRearranging)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border-2 ${
+                      isRearranging
+                        ? "bg-amber-500 border-white text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                        : "bg-white border-black text-black hover:bg-gray-100"
+                    }`}
+                  >
+                    {isRearranging ? (
+                      <>
+                        <CheckCircle size={14} /> Finish Rearranging
+                      </>
+                    ) : (
+                      <>
+                        <LayoutGrid size={14} /> Rearrange Team
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {team.map((member, index) => (
@@ -556,6 +619,8 @@ const App: React.FC = () => {
                     onUpdate={updateMember}
                     onClear={clearMember}
                     onToggleLock={toggleLock}
+                    isRearranging={isRearranging}
+                    onMove={moveMember}
                   />
                 ))}
               </div>
@@ -592,8 +657,8 @@ const App: React.FC = () => {
 
       <footer className="text-center py-8 text-white/60 text-sm">
         <p>
-          &copy; {new Date().getFullYear()} Trainer Hub Analyzer. Pokémon Data provided
-          by PokéAPI.
+          &copy; {new Date().getFullYear()} Trainer Hub Analyzer. Pokémon Data
+          provided by PokéAPI.
         </p>
         <p className="text-xs mt-1">
           Pokémon and Pokémon character names are trademarks of Nintendo.

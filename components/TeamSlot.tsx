@@ -6,7 +6,6 @@ import {
   X,
   Sparkles,
   ShoppingBag,
-  ArrowRight,
   CheckCircle,
   ArrowUpCircle,
   Lock,
@@ -14,6 +13,8 @@ import {
   Loader2,
   Minus,
   Plus,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import {
   fetchPokemon,
@@ -32,6 +33,8 @@ interface TeamSlotProps {
   onUpdate: (index: number, updates: Partial<TeamMember>) => void;
   onClear: (index: number) => void;
   onToggleLock: (index: number) => void;
+  isRearranging?: boolean;
+  onMove?: (index: number, direction: "left" | "right") => void;
 }
 
 const TeamSlot: React.FC<TeamSlotProps> = ({
@@ -40,6 +43,8 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
   onUpdate,
   onClear,
   onToggleLock,
+  isRearranging,
+  onMove,
 }) => {
   const [inputValue, setInputValue] = useState(member.customName || "");
   const [itemInputValue, setItemInputValue] = useState(member.heldItem || "");
@@ -166,7 +171,8 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
           <div className="text-[10px] text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2 font-black uppercase tracking-wider shadow-sm">
             <ArrowRight size={12} className="text-yellow-600" />
             <span>
-              Next: <span className="capitalize">{evo.nextEvolutionName}</span> at Lv. {evo.minLevel}
+              Next: <span className="capitalize">{evo.nextEvolutionName}</span>{" "}
+              at Lv. {evo.minLevel}
             </span>
           </div>
         );
@@ -178,7 +184,8 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       <div className="text-[10px] text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 flex items-center gap-2 font-black uppercase tracking-wider shadow-sm">
         <Sparkles size={12} className="text-blue-600" />
         <span className="capitalize">
-          Next: <span className="font-black">{evo.nextEvolutionName}</span> ({evo.triggerCondition})
+          Next: <span className="font-black">{evo.nextEvolutionName}</span> (
+          {evo.triggerCondition})
         </span>
       </div>
     );
@@ -186,10 +193,11 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
 
   return (
     <div
-      className={`bg-white border-2 ${member.locked
-        ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-        : "border-black shadow-xl"
-        } rounded-2xl p-5 flex flex-col gap-3 relative hover:shadow-2xl transition-all duration-300 min-h-[220px]`}
+      className={`bg-white border-2 ${
+        member.locked
+          ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+          : "border-black shadow-xl"
+      } rounded-2xl p-5 flex flex-col gap-3 relative hover:shadow-2xl transition-all duration-300 min-h-[220px]`}
     >
       <div className="flex justify-between items-center text-gray-400 text-[10px] font-black uppercase tracking-widest">
         <span className="flex items-center gap-2">
@@ -200,10 +208,11 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
           {member.data && (
             <button
               onClick={() => onToggleLock(index)}
-              className={`transition-colors p-1 rounded-full hover:bg-gray-100 ${member.locked
-                ? "text-amber-600 hover:text-amber-500"
-                : "text-gray-400 hover:text-black"
-                }`}
+              className={`transition-colors p-1 rounded-full hover:bg-gray-100 ${
+                member.locked
+                  ? "text-amber-600 hover:text-amber-500"
+                  : "text-gray-400 hover:text-black"
+              }`}
               title={
                 member.locked
                   ? "Unlock Slot"
@@ -213,7 +222,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
               {member.locked ? <Lock size={14} /> : <Unlock size={14} />}
             </button>
           )}
-          {member.data && !member.locked && (
+          {member.data && !member.locked && !isRearranging && (
             <button
               onClick={clearSlot}
               className="p-1 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -225,7 +234,44 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
         </div>
       </div>
 
-      <div className="relative z-10">
+      {/* Rearrange Overlay */}
+      {isRearranging && member.data && (
+        <div className="absolute inset-0 z-50 bg-amber-500/10 backdrop-blur-[1px] rounded-2xl border-2 border-amber-500 flex items-center justify-center pointer-events-none">
+          <div className="flex gap-4 pointer-events-auto">
+            <button
+              disabled={index === 0}
+              onClick={() => onMove?.(index, "left")}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${
+                index === 0
+                  ? "opacity-30 grayscale cursor-not-allowed"
+                  : "hover:bg-amber-500 hover:text-white"
+              }`}
+            >
+              <ArrowLeft size={24} strokeWidth={3} />
+            </button>
+            <button
+              disabled={index === 5}
+              onClick={() => onMove?.(index, "right")}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${
+                index === 5
+                  ? "opacity-30 grayscale cursor-not-allowed"
+                  : "hover:bg-amber-500 hover:text-white"
+              }`}
+            >
+              <ArrowRight size={24} strokeWidth={3} />
+            </button>
+          </div>
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
+            Move Mode
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`relative z-10 ${
+          isRearranging ? "opacity-50 grayscale pointer-events-none" : ""
+        }`}
+      >
         <AutocompleteInput
           value={inputValue}
           onChange={setInputValue}
@@ -264,22 +310,26 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             <div className="flex flex-col gap-0.5 min-w-0 flex-grow">
               <div className="font-black text-xl capitalize truncate leading-tight flex justify-between items-center text-black">
                 {member.data.name}
-                <div className="flex items-center gap-1.5 translate-y-0.5">
+                <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => onUpdate(index, { level: Math.max(1, member.level - 1) })}
+                    onClick={() =>
+                      onUpdate(index, { level: Math.max(1, member.level - 1) })
+                    }
                     className="w-6 h-6 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-gray-100 active:scale-95 transition-all shadow-sm"
                     title="Decrease Level"
                   >
                     <Minus size={10} className="text-black stroke-[3px]" />
                   </button>
-                  <div className="flex items-center bg-gray-100 rounded-full px-2 border-2 border-black h-7">
-                    <span className="text-[10px] text-gray-500 font-bold mr-1">Lv.</span>
+                  <div className="flex items-center justify-center bg-gray-100 rounded-full px-2.5 border-2 border-black h-[34px] min-w-[54px] shadow-inner">
+                    <span className="text-[10px] text-gray-500 font-black uppercase mr-1 select-none">
+                      Lv
+                    </span>
                     <select
                       value={member.level}
                       onChange={(e) =>
                         onUpdate(index, { level: parseInt(e.target.value) })
                       }
-                      className="bg-transparent text-xs font-mono font-bold focus:outline-none text-black cursor-pointer w-7 text-right appearance-none"
+                      className="bg-transparent text-[11px] font-mono font-black focus:outline-none text-black cursor-pointer w-8 h-full text-right appearance-none border-none outline-none py-0 m-0"
                     >
                       {Array.from({ length: 100 }, (_, i) => 100 - i).map(
                         (lvl) => (
@@ -295,7 +345,11 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
                     </select>
                   </div>
                   <button
-                    onClick={() => onUpdate(index, { level: Math.min(100, member.level + 1) })}
+                    onClick={() =>
+                      onUpdate(index, {
+                        level: Math.min(100, member.level + 1),
+                      })
+                    }
                     className="w-6 h-6 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-gray-100 active:scale-95 transition-all shadow-sm"
                     title="Increase Level"
                   >
@@ -399,7 +453,9 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             <div className="mt-1 min-h-[30px] bg-gray-50 border-2 border-black rounded-lg px-2 py-1.5 shadow-inner">
               {previewItemDesc ? (
                 <p className="text-[10px] text-scarlet font-bold animate-in fade-in leading-snug">
-                  <strong className="text-black uppercase text-[9px]">Preview:</strong>{" "}
+                  <strong className="text-black uppercase text-[9px]">
+                    Preview:
+                  </strong>{" "}
                   {previewItemDesc}
                 </p>
               ) : member.heldItemDescription ? (
