@@ -9,6 +9,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import AutocompleteInput from "./AutocompleteInput";
+import PaldeaMap from "./PaldeaMap";
 import {
   fetchPokemon,
   getPokemonNames,
@@ -24,6 +25,8 @@ const PokemonFinder: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   const handleSearch = async (overrideName?: string) => {
     const nameToSearch =
@@ -118,150 +121,195 @@ const PokemonFinder: React.FC = () => {
 
           {/* Main Content Card */}
           {pokemon ? (
-            <div className="bg-white/60 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-xl animate-in zoom-in-95 duration-500 flex flex-col lg:flex-row gap-10 relative overflow-hidden group">
-              {/* Decorative Sideline */}
-              <div
-                className="absolute left-0 top-0 bottom-0 w-2 transition-colors duration-500"
-                style={{ backgroundColor: getPrimaryColor() }}
-              />
+            <>
+              <div className="bg-white/60 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-xl animate-in zoom-in-95 duration-500 flex flex-col lg:flex-row gap-10 relative overflow-hidden group">
+                {/* Decorative Sideline */}
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-2 transition-colors duration-500"
+                  style={{ backgroundColor: getPrimaryColor() }}
+                />
 
-              {/* Column 1: Hero Identity */}
-              <div className="flex-shrink-0 flex flex-col items-center lg:items-start w-full lg:w-72 gap-6 relative z-10">
-                <div className="relative group-hover:scale-105 transition-transform duration-500 ease-out">
-                  <div className="absolute inset-0 bg-black/5 rounded-full blur-2xl transform scale-90 translate-y-4"></div>
-                  <img
-                    src={
-                      pokemon.sprites.other?.["official-artwork"]
-                        .front_default || pokemon.sprites.front_default
-                    }
-                    alt={pokemon.name}
-                    className="w-64 h-64 object-contain drop-shadow-2xl relative z-10"
-                  />
-                  {/* Number Badge */}
-                  <div className="absolute -bottom-4 right-4 bg-black/80 backdrop-blur text-white text-xs font-black px-3 py-1 rounded-full border border-white/20 shadow-lg z-20">
-                    #{String(pokemon.id).padStart(4, "0")}
+                {/* Column 1: Hero Identity */}
+                <div className="flex-shrink-0 flex flex-col items-center lg:items-start w-full lg:w-72 gap-6 relative z-10">
+                  <div className="relative group-hover:scale-105 transition-transform duration-500 ease-out">
+                    <div className="absolute inset-0 bg-black/5 rounded-full blur-2xl transform scale-90 translate-y-4"></div>
+                    <img
+                      src={
+                        pokemon.sprites.other?.["official-artwork"]
+                          .front_default || pokemon.sprites.front_default
+                      }
+                      alt={pokemon.name}
+                      className="w-64 h-64 object-contain drop-shadow-2xl relative z-10"
+                    />
+                    {/* Number Badge */}
+                    <div className="absolute -bottom-4 right-4 bg-black/80 backdrop-blur text-white text-xs font-black px-3 py-1 rounded-full border border-white/20 shadow-lg z-20">
+                      #{String(pokemon.id).padStart(4, "0")}
+                    </div>
+                  </div>
+
+                  <div className="text-center lg:text-left w-full">
+                    <h1 className="text-4xl font-black capitalize text-black mb-3 tracking-tight">
+                      {pokemon.name.replace(/-/g, " ")}
+                    </h1>
+                    <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                      {pokemon.types.map((t) => (
+                        <span
+                          key={t.type.name}
+                          className="px-4 py-1.5 rounded-lg text-xs font-black text-white uppercase shadow-md tracking-wider transform hover:-translate-y-0.5 transition-transform"
+                          style={{
+                            backgroundColor: TYPE_COLORS[t.type.name] || "#777",
+                            textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                          }}
+                        >
+                          {t.type.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-center lg:text-left w-full">
-                  <h1 className="text-4xl font-black capitalize text-black mb-3 tracking-tight">
-                    {pokemon.name.replace(/-/g, " ")}
-                  </h1>
-                  <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                    {pokemon.types.map((t) => (
-                      <span
-                        key={t.type.name}
-                        className="px-4 py-1.5 rounded-lg text-xs font-black text-white uppercase shadow-md tracking-wider transform hover:-translate-y-0.5 transition-transform"
-                        style={{
-                          backgroundColor: TYPE_COLORS[t.type.name] || "#777",
-                          textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                        }}
-                      >
-                        {t.type.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Column 2: Stats (Compact) */}
-              <div className="w-full lg:w-64 flex flex-col justify-center">
-                <h3 className="text-xs font-black uppercase text-gray-400 mb-4 tracking-widest flex items-center gap-2">
-                  <div className="h-px bg-gray-300 flex-1"></div>
-                  Base Stats
-                  <div className="h-px bg-gray-300 flex-1"></div>
-                </h3>
-                <div className="space-y-3">
-                  {pokemon.stats.map((stat) => {
-                    const shortName: Record<string, string> = {
-                      hp: "HP",
-                      attack: "ATK",
-                      defense: "DEF",
-                      "special-attack": "SPA",
-                      "special-defense": "SPD",
-                      speed: "SPE",
-                    };
-                    const val = stat.base_stat;
-                    const percent = Math.min((val / 200) * 100, 100);
-                    const color =
-                      val >= 100
-                        ? "#10b981"
-                        : val >= 70
-                        ? "#f59e0b"
-                        : "#ef4444"; // emerald, amber, red
-
-                    return (
-                      <div key={stat.stat.name} className="group/stat">
-                        <div className="flex justify-between text-[10px] font-bold uppercase text-gray-500 mb-1">
-                          <span>{shortName[stat.stat.name]}</span>
-                          <span className="text-black">{val}</span>
-                        </div>
-                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                          <div
-                            className="h-full rounded-full transition-all duration-1000 ease-out"
-                            style={{
-                              width: `${percent}%`,
-                              backgroundColor: color,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Column 3: Locations (Grid) */}
-              <div className="flex-1 min-w-0 bg-white/40 rounded-2xl p-6 border border-white/60 shadow-inner flex flex-col">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-scarlet text-white p-2 rounded-lg shadow-sm">
-                    <MapPin size={18} strokeWidth={2.5} />
-                  </div>
-                  <h3 className="text-lg font-black uppercase text-gray-800 tracking-tight">
-                    Encounters
+                {/* Column 2: Stats (Compact) */}
+                <div className="w-full lg:w-64 flex flex-col justify-center">
+                  <h3 className="text-xs font-black uppercase text-gray-400 mb-4 tracking-widest flex items-center gap-2">
+                    <div className="h-px bg-gray-300 flex-1"></div>
+                    Base Stats
+                    <div className="h-px bg-gray-300 flex-1"></div>
                   </h3>
+                  <div className="space-y-3">
+                    {pokemon.stats.map((stat) => {
+                      const shortName: Record<string, string> = {
+                        hp: "HP",
+                        attack: "ATK",
+                        defense: "DEF",
+                        "special-attack": "SPA",
+                        "special-defense": "SPD",
+                        speed: "SPE",
+                      };
+                      const val = stat.base_stat;
+                      const percent = Math.min((val / 200) * 100, 100);
+                      const color =
+                        val >= 100
+                          ? "#10b981"
+                          : val >= 70
+                          ? "#f59e0b"
+                          : "#ef4444"; // emerald, amber, red
+
+                      return (
+                        <div key={stat.stat.name} className="group/stat">
+                          <div className="flex justify-between text-[10px] font-bold uppercase text-gray-500 mb-1">
+                            <span>{shortName[stat.stat.name]}</span>
+                            <span className="text-black">{val}</span>
+                          </div>
+                          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                            <div
+                              className="h-full rounded-full transition-all duration-1000 ease-out"
+                              style={{
+                                width: `${percent}%`,
+                                backgroundColor: color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="flex-1 overflow-hidden relative">
-                  {locationLoading ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 animate-pulse">
-                      <Loader2 className="animate-spin mb-2" size={32} />
-                      <span className="text-xs font-bold uppercase tracking-widest">
-                        Scanning Map...
-                      </span>
+                {/* Column 3: Location List */}
+                <div className="flex-1 min-w-0 bg-white/40 rounded-2xl p-6 border border-white/60 shadow-inner flex flex-col relative overflow-hidden">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-scarlet text-white p-2 rounded-lg shadow-sm">
+                      <MapPin size={18} strokeWidth={2.5} />
                     </div>
-                  ) : locations.length > 0 ? (
-                    <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
-                      <div className="flex flex-wrap gap-2">
-                        {locations.map((loc) => (
-                          <div
-                            key={loc}
-                            className="bg-white hover:bg-scarlet hover:text-white border border-gray-150 px-3 py-2 rounded-lg text-xs font-bold text-gray-600 shadow-sm transition-all duration-200 cursor-default select-none"
-                          >
-                            {loc}
-                          </div>
-                        ))}
+                    <h3 className="text-lg font-black uppercase text-gray-800 tracking-tight">
+                      Encounters
+                    </h3>
+                  </div>
+
+                  <div className="flex-1 overflow-hidden relative">
+                    {locationLoading ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 animate-pulse">
+                        <Loader2 className="animate-spin mb-2" size={32} />
+                        <span className="text-xs font-bold uppercase tracking-widest">
+                          Scanning Map...
+                        </span>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-60">
-                      <HelpCircle size={40} className="text-gray-400 mb-2" />
-                      <p className="text-sm font-bold text-gray-600">
-                        No Wild Locations
-                      </p>
-                      <p className="text-[10px] text-gray-400 max-w-[150px] mt-1 leading-tight">
-                        Check Raids, Eggs, or Version Exclusives.
-                      </p>
+                    ) : locations.length > 0 ? (
+                      <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="flex flex-wrap gap-2">
+                          {locations.map((loc) => (
+                            <button
+                              key={loc}
+                              onClick={() => {
+                                setSelectedLocation(loc);
+                                setViewMode("map");
+                              }}
+                              className={`px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all duration-200 cursor-pointer select-none text-left border ${
+                                selectedLocation === loc
+                                  ? "bg-scarlet text-white border-scarlet"
+                                  : "bg-white hover:bg-scarlet hover:text-white border-gray-150 text-gray-600"
+                              }`}
+                            >
+                              {loc}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-60">
+                        <HelpCircle size={40} className="text-gray-400 mb-2" />
+                        <p className="text-sm font-bold text-gray-600">
+                          No Wild Locations
+                        </p>
+                        <p className="text-[10px] text-gray-400 max-w-[150px] mt-1 leading-tight">
+                          Check Raids, Eggs, or Version Exclusives.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {locations.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-black/5 text-[9px] font-bold text-gray-400 text-center uppercase tracking-widest">
+                      Click a location to view on map
                     </div>
                   )}
                 </div>
-                {locations.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-black/5 text-[9px] font-bold text-gray-400 text-center uppercase tracking-widest">
-                    Data Source: PokéAPI + Community Maps
-                  </div>
-                )}
               </div>
-            </div>
+
+              {/* Map Section - Below the card */}
+              {viewMode === "map" && selectedLocation && (
+                <div className="mt-8 animate-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-scarlet text-white p-2 rounded-lg shadow-lg">
+                        <MapPin size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black uppercase text-gray-800 tracking-tight">
+                          Map View
+                        </h3>
+                        <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">
+                          {selectedLocation}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setViewMode("list");
+                        setSelectedLocation(null);
+                      }}
+                      className="text-sm font-black uppercase bg-white border border-gray-200 px-4 py-2 rounded-xl shadow-sm hover:bg-gray-50 transition-colors"
+                    >
+                      Close Map
+                    </button>
+                  </div>
+                  <PaldeaMap
+                    selectedLocation={selectedLocation}
+                    spriteUrl={pokemon?.sprites.front_default || ""}
+                    allLocations={locations}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             // Empty State
             !loading && (
