@@ -97,10 +97,12 @@ const saveProfiles = async (data) => {
 // GET /api/profiles - Load profiles
 app.get("/api/profiles", async (req, res) => {
   const data = await loadProfiles();
+  const storageType = db ? "firebase" : "local";
+
   if (data) {
-    res.json(data);
+    res.json({ ...data, storageType });
   } else {
-    res.json({});
+    res.json({ storageType });
   }
 });
 

@@ -57,6 +57,9 @@ const App: React.FC = () => {
   const [activeProfileId, setActiveProfileId] = useState<string>("");
   const [globalCaughtPokemon, setGlobalCaughtPokemon] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [storageType, setStorageType] = useState<
+    "firebase" | "local" | "offline"
+  >("offline");
 
   // --- Global State ---
   const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder">(
@@ -74,49 +77,99 @@ const App: React.FC = () => {
   const team = activeProfile?.team || INITIAL_TEAM;
   const caughtPokemon = globalCaughtPokemon;
 
-  // --- Profile Persistence (API) ---
+  // --- Profile Persistence (API + LocalStorage) ---
   useEffect(() => {
     // Load profiles from server on mount
     const loadProfiles = async () => {
+      let serverData = null;
       try {
         const response = await fetch("/api/profiles");
-        const data = await response.json();
+        serverData = await response.json();
+      } catch (e) {
+        console.warn("Server profiles unreachable:", e);
+      }
 
-        if (data && data.profiles && Object.keys(data.profiles).length > 0) {
-          setProfiles(data.profiles);
-          setActiveProfileId(data.activeProfileId);
-          setGlobalCaughtPokemon(data.globalCaughtPokemon || []);
-        } else {
-          // No saved profiles or empty object from server, create default
-          const defaultProfile = createDefaultProfile();
-          setProfiles({ [defaultProfile.id]: defaultProfile });
-          setActiveProfileId(defaultProfile.id);
-          setGlobalCaughtPokemon([]);
+      // Try LocalStorage
+      let localData: any = null;
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          localData = JSON.parse(stored);
         }
       } catch (e) {
-        console.warn("Server profiles unreachable, using local default:", e);
-        // Fallback to default profile if server unavailable
-        const defaultProfile = createDefaultProfile();
-        setProfiles({ [defaultProfile.id]: defaultProfile });
-        setActiveProfileId(defaultProfile.id);
+        console.error("LocalStorage error:", e);
       }
+
+      // Merge Logic: Server > Local > Default
+      let mergedProfiles = {};
+      let mergedActiveId = "";
+      let mergedCaught: string[] = [];
+      let currentStorageType: "firebase" | "local" | "offline" = "offline";
+
+      if (
+        serverData &&
+        serverData.profiles &&
+        Object.keys(serverData.profiles).length > 0
+      ) {
+        // Server has data, use it
+        mergedProfiles = serverData.profiles;
+        mergedActiveId = serverData.activeProfileId;
+        mergedCaught = serverData.globalCaughtPokemon || [];
+        currentStorageType = serverData.storageType || "local"; // Default to local if undefined (legacy server)
+      } else if (
+        localData &&
+        localData.profiles &&
+        Object.keys(localData.profiles).length > 0
+      ) {
+        // Server empty or offline, but LocalStorage has data
+        console.log("Using LocalStorage backup");
+        mergedProfiles = localData.profiles;
+        mergedActiveId = localData.activeProfileId;
+        mergedCaught = localData.globalCaughtPokemon || [];
+        currentStorageType = serverData
+          ? serverData.storageType || "local"
+          : "offline";
+      } else {
+        // Nothing anywhere, create default
+        const defaultProfile = createDefaultProfile();
+        mergedProfiles = { [defaultProfile.id]: defaultProfile };
+        mergedActiveId = defaultProfile.id;
+        mergedCaught = [];
+        currentStorageType = serverData
+          ? serverData.storageType || "local"
+          : "offline";
+      }
+
+      setProfiles(mergedProfiles);
+      setActiveProfileId(mergedActiveId);
+      setGlobalCaughtPokemon(mergedCaught);
+      setStorageType(currentStorageType);
       setIsLoaded(true);
     };
 
     loadProfiles();
   }, []);
 
-  // Save profiles to server on change (debounced)
+  // Save profiles to server on change (debounced) and LocalStorage (immediately)
   useEffect(() => {
     if (!isLoaded || Object.keys(profiles).length === 0) return;
 
+    const state: ProfilesState = {
+      activeProfileId,
+      profiles,
+      globalCaughtPokemon,
+    };
+
+    // 1. Immediate LocalStorage Save
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Failed to save to localStorage", e);
+    }
+
+    // 2. Debounced Server Save
     const saveTimeout = setTimeout(async () => {
       try {
-        const state: ProfilesState = {
-          activeProfileId,
-          profiles,
-          globalCaughtPokemon,
-        };
         await fetch("/api/profiles", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -124,6 +177,7 @@ const App: React.FC = () => {
         });
       } catch (e) {
         console.error("Failed to save profiles to server:", e);
+        setStorageType("offline"); // Update status if save fails
       }
     }, 500); // Debounce 500ms
 
@@ -507,9 +561,22 @@ const App: React.FC = () => {
                 <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-black drop-shadow-sm flex items-center gap-2">
                   Trainer Hub <span className="text-scarlet">SV</span>
                 </h1>
-                <p className="text-[10px] text-gray-500 tracking-widest uppercase font-bold">
-                  Team Analyzer & Management
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-gray-500 tracking-widest uppercase font-bold">
+                    Team Analyzer & Management
+                  </p>
+                  {storageType !== "firebase" && (
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                        storageType === "offline"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-orange-100 text-orange-600"
+                      }`}
+                    >
+                      {storageType === "offline" ? "Offline" : "Local Server"}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
