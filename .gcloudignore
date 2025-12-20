@@ -1,0 +1,7 @@
+.gcloudignore
+.git
+.gitignore
+node_modules/
+
+# Explicitly allow the firebase key (override gitignore)
+!server/firebase-key.json
