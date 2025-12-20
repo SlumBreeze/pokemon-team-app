@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const DATA_FILE = path.join(__dirname, 'data', 'profiles.json');
 
 // Ensure data directory exists
@@ -62,6 +62,25 @@ app.post('/api/profiles', (req, res) => {
         res.json({ success: true });
     } else {
         res.status(500).json({ success: false, error: 'Failed to save' });
+    }
+});
+
+// Serve static files from the 'dist' directory
+const distPath = path.join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+
+// Catch-all route to serve index.html for client-side routing
+app.use((req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+
+    const indexPath = path.join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('Not found');
     }
 });
 
