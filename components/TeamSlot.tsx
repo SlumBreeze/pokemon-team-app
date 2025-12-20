@@ -197,7 +197,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
         member.locked
           ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
           : "border-black shadow-xl"
-      } rounded-2xl p-5 flex flex-col gap-3 relative hover:shadow-2xl transition-all duration-300 min-h-[220px]`}
+      } rounded-2xl p-3 flex flex-col gap-2 relative hover:shadow-2xl transition-all duration-300 min-h-[180px]`}
     >
       <div className="flex justify-between items-center text-gray-400 text-[10px] font-black uppercase tracking-widest">
         <span className="flex items-center gap-2">
@@ -294,21 +294,21 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       )}
 
       {member.data ? (
-        <div className="flex flex-col gap-3 animate-fade-in flex-grow">
+        <div className="flex flex-col gap-2 animate-fade-in flex-grow">
           {/* Header Info */}
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 flex-shrink-0 bg-gray-50 rounded-full flex items-center justify-center border-2 border-black relative shadow-inner">
+          <div className="flex items-center gap-2">
+            <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-full flex items-center justify-center border-2 border-black relative shadow-inner">
               <img
                 src={
                   member.data.sprites.other?.["official-artwork"]
                     .front_default || member.data.sprites.front_default
                 }
                 alt={member.data.name}
-                className="w-14 h-14 object-contain z-10"
+                className="w-10 h-10 object-contain z-10"
               />
             </div>
             <div className="flex flex-col gap-0.5 min-w-0 flex-grow">
-              <div className="font-black text-xl capitalize truncate leading-tight flex justify-between items-center text-black">
+              <div className="font-black text-base capitalize truncate leading-tight flex justify-between items-center text-black">
                 {member.data.name}
                 <div className="flex items-center gap-1.5">
                   <button
@@ -450,7 +450,7 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             </div>
 
             {/* Description Box (Shows Selected Item OR Hover Preview) */}
-            <div className="mt-1 min-h-[30px] bg-gray-50 border-2 border-black rounded-lg px-2 py-1.5 shadow-inner">
+            <div className="mt-1 min-h-[24px] bg-gray-50 border-2 border-black rounded-lg px-2 py-1 shadow-inner">
               {previewItemDesc ? (
                 <p className="text-[10px] text-scarlet font-bold animate-in fade-in leading-snug">
                   <strong className="text-black uppercase text-[9px]">
