@@ -83,7 +83,9 @@ const App: React.FC = () => {
     const loadProfiles = async () => {
       let serverData = null;
       try {
-        const response = await fetch("/api/profiles");
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || ""}/api/profiles`
+        );
         serverData = await response.json();
       } catch (e) {
         console.warn("Server profiles unreachable:", e);
@@ -170,7 +172,7 @@ const App: React.FC = () => {
     // 2. Debounced Server Save
     const saveTimeout = setTimeout(async () => {
       try {
-        await fetch("/api/profiles", {
+        await fetch(`${import.meta.env.VITE_API_URL || ""}/api/profiles`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(state),

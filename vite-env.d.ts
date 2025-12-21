@@ -28,3 +28,11 @@ declare module "*.webp" {
   const src: string;
   export default src;
 }
+
+// Vite environment variables
+interface ImportMetaEnv {
+  VITE_API_URL?: string;
+}
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
