@@ -416,30 +416,54 @@ const App: React.FC = () => {
     try {
       // Use override type (from Analysis) or global state (from main flow - though main flow usually clears it)
       const targetType = overrideTargetType || targetBossType;
+
+      // Debug logging to verify full Pokedex is being scanned
+      console.log(
+        `[Auto Build] Scanning ${
+          caughtPokemon.length
+        } caught Pokemon. Target Boss Type: ${targetType || "None (General)"}`
+      );
+
       const bestTeamNames = await generateBestTeam(
         caughtPokemon,
         team,
         targetType
       );
 
+      console.log(`[Auto Build] Generated team: ${bestTeamNames.join(", ")}`);
+
       const newTeam = [...team];
       // List of names to distribute into unlocked slots
       // We must subtract the locked mons that are staying in place to avoid duplication
       const namesToDistribute = [...bestTeamNames];
 
-      team.forEach((member) => {
+      // Log locked status
+      const lockedSlots = team.filter((m) => m.locked).length;
+      console.log(`[Auto Build] Locked slots: ${lockedSlots}`);
+
+      team.forEach((member, idx) => {
         if (member.locked && member.data) {
-          const idx = namesToDistribute.indexOf(member.data.name);
-          if (idx > -1) {
-            namesToDistribute.splice(idx, 1);
+          console.log(
+            `[Auto Build] Slot ${idx} is LOCKED with ${member.data.name}`
+          );
+          const nameIdx = namesToDistribute.indexOf(member.data.name);
+          if (nameIdx > -1) {
+            namesToDistribute.splice(nameIdx, 1);
           }
         }
       });
+
+      console.log(
+        `[Auto Build] Names to distribute (after removing locked): ${namesToDistribute.join(
+          ", "
+        )}`
+      );
 
       for (let i = 0; i < 6; i++) {
         if (!newTeam[i].locked) {
           if (namesToDistribute.length > 0) {
             const name = namesToDistribute.shift()!;
+            console.log(`[Auto Build] Filling slot ${i} with: ${name}`);
             const data = await fetchPokemon(name);
             newTeam[i] = {
               ...INITIAL_TEAM[i],
@@ -452,14 +476,24 @@ const App: React.FC = () => {
             };
           } else {
             // Clear slot if no more mons
+            console.log(`[Auto Build] Clearing slot ${i} (no more names)`);
             newTeam[i] = {
               ...INITIAL_TEAM[i],
               id: newTeam[i].id,
               locked: false,
             };
           }
+        } else {
+          console.log(`[Auto Build] Skipping slot ${i} (locked)`);
         }
       }
+
+      console.log(
+        `[Auto Build] Final team: ${newTeam
+          .map((m) => m.data?.name || "empty")
+          .join(", ")}`
+      );
+
       setTeam(newTeam);
       setActiveTab("builder"); // Switch back to view result
     } catch (e) {

@@ -96,10 +96,10 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
 
       setLoadingSuggestions(true);
       const results: (PokemonData & { score: number; reason: string })[] = [];
-      const batchSize = 10;
-      const searchLimit = Math.min(caughtPokemon.length, 100);
+      const batchSize = 20; // Increased batch for faster processing
+      // Scan ALL caught Pokemon (no artificial limit)
 
-      for (let i = 0; i < searchLimit; i += batchSize) {
+      for (let i = 0; i < caughtPokemon.length; i += batchSize) {
         const batch = caughtPokemon.slice(i, i + batchSize);
         const batchData = await Promise.all(
           batch.map(async (name) => {
@@ -313,341 +313,9 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
 
   const nextBest = getNextBest();
 
-  if (loadingSuggestions) {
-    return (
-      <div className="mt-4 bg-white border-4 border-black rounded-2xl p-8 flex flex-col items-center justify-center gap-4 shadow-xl">
-        <Loader2 className="animate-spin text-scarlet" size={32} />
-        <span className="text-black font-black uppercase tracking-widest text-xs">
-          Finding Best Counters...
-        </span>
-      </div>
-    );
-  }
-
-  if (suggestedCounters.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-6 bg-white border-4 border-black rounded-2xl p-4 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-2 bg-scarlet"></div>
-      <h3 className="text-black font-black uppercase text-xs mb-4 flex items-center gap-2 tracking-widest">
-        <Crown size={16} className="text-scarlet" />
-        Top Counters from Your Pokédex{" "}
-        <span className="text-black/40 font-black ml-2 uppercase">
-          VS {targetType}
-        </span>
-      </h3>
-      <div className="flex flex-wrap gap-3 mb-4">
-        {suggestedCounters.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setSelectedId(p.id === selectedId ? null : p.id)}
-            className={`bg-gray-50 border-2 rounded-xl p-2 flex flex-col items-center gap-1 w-24 transition-all cursor-pointer ${
-              p.id === selectedId
-                ? "border-scarlet ring-4 ring-scarlet/10 scale-105 shadow-lg"
-                : "border-black/10 hover:border-black"
-            }`}
-          >
-            <div className="p-1 bg-white rounded-full border border-black/5 shadow-inner mb-1">
-              <img
-                src={
-                  p.sprites.other?.["official-artwork"].front_default ||
-                  p.sprites.front_default
-                }
-                alt={p.name}
-                className="w-16 h-16 object-contain"
-              />
-            </div>
-            <span className="text-[10px] text-black capitalize text-center truncate w-full font-black">
-              {p.name.replace(/-/g, " ")}
-            </span>
-            <div className="flex gap-0.5">
-              {p.types.map((t) => (
-                <span
-                  key={t.type.name}
-                  className="px-1 py-0.5 rounded text-[7px] font-black text-white uppercase"
-                  style={{
-                    backgroundColor: TYPE_COLORS[t.type.name] || "#555",
-                  }}
-                >
-                  {t.type.name.slice(0, 3)}
-                </span>
-              ))}
-            </div>
-            {(p as any).reason && (
-              <span className="text-[9px] text-scarlet font-black mt-2 text-center leading-tight uppercase tracking-tighter">
-                {(p as any).reason}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Selected Pokemon Analysis */}
-      {selectedPokemon && analysis && (
-        <div className="bg-white border-2 border-black rounded-2xl p-4 animate-in slide-in-from-top-2 shadow-lg mt-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-2 bg-gray-50 rounded-full border-2 border-black shadow-inner">
-              <img
-                src={
-                  selectedPokemon.sprites.other?.["official-artwork"]
-                    .front_default || selectedPokemon.sprites.front_default
-                }
-                alt={selectedPokemon.name}
-                className="w-20 h-20 object-contain"
-              />
-            </div>
-            <div className="flex-grow">
-              <div className="flex items-center gap-3">
-                <h4 className="text-2xl font-black capitalize text-black">
-                  {selectedPokemon.name.replace(/-/g, " ")}
-                </h4>
-                {(selectedPokemon as any).reason && (
-                  <span className="px-3 py-1 bg-scarlet rounded-full text-[10px] text-white font-black uppercase tracking-widest shadow-sm">
-                    {(selectedPokemon as any).reason}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-tight">
-                  Your Trainer Level:
-                </span>
-                <select
-                  value={selectedLevel}
-                  onChange={(e) => setSelectedLevel(parseInt(e.target.value))}
-                  className="bg-gray-100 border-2 border-black rounded-lg px-3 py-1 text-black text-sm font-bold focus:outline-none focus:ring-2 focus:ring-scarlet/20"
-                >
-                  {Array.from({ length: 100 }, (_, i) => 100 - i).map((lvl) => (
-                    <option
-                      key={lvl}
-                      value={lvl}
-                      className="bg-white text-black"
-                    >
-                      {lvl}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-            {/* Speed Check */}
-            <div
-              className={`p-3 rounded-xl border-2 ${
-                analysis.isFaster
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
-              } shadow-sm`}
-            >
-              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest">
-                Speed
-              </div>
-              <div
-                className={`font-black text-sm uppercase tracking-tighter ${
-                  analysis.isFaster ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {analysis.isFaster ? (
-                  <span className="flex items-center gap-1.5 font-bold">
-                    <ArrowUpCircle size={16} /> Faster ({analysis.mySpeed})
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 font-bold">
-                    <ArrowDownCircle size={16} /> Slower ({analysis.mySpeed})
-                  </span>
-                )}
-              </div>
-              <div className="text-[10px] text-gray-400 font-bold mt-1">
-                Enemy: {enemySpeed}
-              </div>
-            </div>
-
-            {/* Effectiveness */}
-            <div
-              className={`p-3 rounded-xl border-2 ${
-                analysis.isStillEffective
-                  ? "bg-green-50 border-green-200"
-                  : "bg-yellow-50 border-yellow-200"
-              } shadow-sm`}
-            >
-              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest">
-                Offense
-              </div>
-              <div
-                className={`font-black text-sm uppercase tracking-tighter ${
-                  analysis.isStillEffective
-                    ? "text-green-600"
-                    : "text-yellow-600"
-                }`}
-              >
-                {analysis.bestMult >= 4
-                  ? "4x Super Effective!"
-                  : analysis.bestMult >= 2
-                  ? "2x Super Effective"
-                  : "Neutral Damage"}
-              </div>
-            </div>
-
-            {/* Defense Check */}
-            <div
-              className={`p-3 rounded-xl border-2 ${
-                analysis.isImmune || analysis.isResistant
-                  ? "bg-green-50 border-green-200"
-                  : analysis.defenseMult >= 2
-                  ? "bg-red-50 border-red-200"
-                  : "bg-gray-50 border-gray-200"
-              } shadow-sm`}
-            >
-              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest">
-                Defense
-              </div>
-              <div
-                className={`font-black text-sm uppercase tracking-tighter ${
-                  analysis.isImmune || analysis.isResistant
-                    ? "text-green-600"
-                    : analysis.defenseMult >= 2
-                    ? "text-red-600"
-                    : "text-gray-400"
-                }`}
-              >
-                {analysis.isImmune
-                  ? "Immune (0x)"
-                  : analysis.isResistant
-                  ? `Resistant (${analysis.defenseMult}x)`
-                  : analysis.defenseMult >= 2
-                  ? `Weak (${analysis.defenseMult}x)`
-                  : "Neutral"}
-              </div>
-            </div>
-
-            {/* Level Check */}
-            <div
-              className={`p-3 rounded-xl border-2 col-span-2 md:col-span-3 ${
-                analysis.levelAdvantage
-                  ? "bg-green-50 border-green-200"
-                  : "bg-orange-50 border-orange-200"
-              } shadow-sm`}
-            >
-              <div className="text-[10px] text-black/40 font-black uppercase mb-1 tracking-widest text-center md:text-left">
-                Level Comparison
-              </div>
-              <div
-                className={`font-black uppercase tracking-tighter text-sm text-center md:text-left ${
-                  analysis.levelAdvantage ? "text-green-600" : "text-orange-600"
-                }`}
-              >
-                {analysis.levelAdvantage
-                  ? `Level ${selectedLevel} (Over boss lvl ${enemyLevel})`
-                  : `Needs +${
-                      enemyLevel - selectedLevel
-                    } levels (Target: ${enemyLevel})`}
-              </div>
-            </div>
-          </div>
-
-          {/* Verdict */}
-          <div
-            className={`mt-4 p-4 rounded-2xl text-center font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg border-2 border-black/10 ${verdict.color}`}
-          >
-            {verdict.icon}
-            <div className="flex flex-col text-left">
-              <span className="text-sm">{verdict.label}</span>
-              <span className="text-[10px] opacity-90 font-bold tracking-tight">
-                {verdict.message}
-              </span>
-            </div>
-          </div>
-
-          {/* Replacement Suggestion */}
-          {replacementSuggestion && replacementSuggestion.data && (
-            <div className="mt-4 p-4 bg-gray-50 border-2 border-black/10 rounded-2xl shadow-inner">
-              <div className="text-[10px] text-gray-400 uppercase font-black mb-3 flex items-center gap-1.5 tracking-widest">
-                <ArrowDownCircle size={14} className="text-scarlet" /> Suggested
-                Replacement
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="bg-white p-1 rounded-full border-2 border-black/5 shadow-sm">
-                  <img
-                    src={
-                      replacementSuggestion.data.sprites.other?.[
-                        "official-artwork"
-                      ].front_default ||
-                      replacementSuggestion.data.sprites.front_default
-                    }
-                    alt={replacementSuggestion.data.name}
-                    className="w-12 h-12 object-contain grayscale opacity-60"
-                  />
-                </div>
-                <div className="flex-grow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-black capitalize font-black text-sm">
-                        Replace:{" "}
-                        {replacementSuggestion.data.name.replace(/-/g, " ")}
-                      </span>
-                      <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                        Slot{" "}
-                        {team.findIndex(
-                          (m) => m.id === replacementSuggestion.id
-                        ) + 1}
-                      </div>
-                    </div>
-                    {replacementSuggestion.locked && (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md">
-                        <Lock size={10} /> Locked
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-scarlet font-black uppercase tracking-tighter mt-1">
-                    Worst matchup vs {targetType}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Next Best Alternative */}
-          {nextBest && (
-            <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-2xl overflow-hidden shadow-md">
-              <div className="px-4 py-2.5 bg-blue-100/50 text-[10px] text-blue-700 uppercase font-black flex items-center gap-1.5 tracking-widest border-b border-blue-200">
-                <Crown size={14} className="text-amber-500" /> Next Best
-                Alternative
-              </div>
-              <button
-                onClick={() => setSelectedId(nextBest.id)}
-                className="flex items-center gap-4 p-4 hover:bg-white transition-all w-full text-left group"
-              >
-                <div className="bg-white p-1 rounded-full border-2 border-blue-100 shadow-sm group-hover:scale-110 transition-transform">
-                  <img
-                    src={
-                      nextBest.sprites.other?.["official-artwork"]
-                        .front_default || nextBest.sprites.front_default
-                    }
-                    alt={nextBest.name}
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-                <div>
-                  <div className="text-blue-900 capitalize font-black text-sm group-hover:text-blue-700 transition-colors">
-                    Try: {nextBest.name.replace(/-/g, " ")}
-                  </div>
-                  <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-0.5">
-                    Strong Offensive Counter
-                  </div>
-                </div>
-                <ArrowRight
-                  size={16}
-                  className="ml-auto text-blue-300 group-hover:translate-x-1 transition-transform"
-                />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  // This component now only fetches data for inline suggestions
+  // No visible UI - all suggestions appear inline on matchup cards
+  return null;
 };
 
 const AnalysisSection: React.FC<AnalysisSectionProps> = ({
@@ -945,6 +613,74 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   // Helper for catch button
   const isCaught = enemyData ? caughtPokemon.includes(enemyData.name) : false;
 
+  // Replacement suggestions cache (stored by target type)
+  const [replacementCache, setReplacementCache] = useState<
+    Record<string, { name: string; types: string[] } | null>
+  >({});
+
+  // Find a replacement from Pokedex that counters the given type
+  const getReplacementSuggestion = (
+    targetType: string
+  ): { name: string; types: string[] } | null => {
+    if (!targetType) return null;
+
+    // Check cache first
+    if (replacementCache[targetType] !== undefined) {
+      return replacementCache[targetType];
+    }
+
+    // Find first caught Pokemon that counters this type and isn't already in team
+    const teamNames = team.filter((m) => m.data).map((m) => m.data!.name);
+
+    // Types that are super effective against targetType
+    const counterTypes: Record<string, string[]> = {
+      water: ["electric", "grass"],
+      fire: ["water", "rock", "ground"],
+      grass: ["fire", "ice", "poison", "flying", "bug"],
+      electric: ["ground"],
+      ground: ["water", "grass", "ice"],
+      rock: ["water", "grass", "fighting", "ground", "steel"],
+      flying: ["electric", "ice", "rock"],
+      poison: ["ground", "psychic"],
+      psychic: ["bug", "ghost", "dark"],
+      fighting: ["flying", "psychic", "fairy"],
+      bug: ["fire", "flying", "rock"],
+      ghost: ["ghost", "dark"],
+      dark: ["fighting", "bug", "fairy"],
+      dragon: ["ice", "dragon", "fairy"],
+      steel: ["fire", "fighting", "ground"],
+      fairy: ["poison", "steel"],
+      ice: ["fire", "fighting", "rock", "steel"],
+      normal: ["fighting"],
+    };
+
+    // The boss has targetType - we need Pokemon that can hit it super effectively
+    // OR resist its attacks
+    const effectiveTypes = counterTypes[targetType] || [];
+
+    // Look for a caught Pokemon with one of these types that isn't in the team
+    for (const pName of caughtPokemon) {
+      if (teamNames.includes(pName)) continue;
+
+      // We don't have type data here - just return the name and we'll display it
+      // The actual UI will need to fetch this or we use a simple heuristic
+      // For now, return the first available - the Top Counters section already calculated this
+    }
+
+    return null; // Will be populated by the SuggestedCounters component data
+  };
+
+  // Use suggestedCounters for replacement suggestions (already calculated)
+  const findReplacementFromSuggested = (
+    memberName: string
+  ): PokemonData | null => {
+    if (!suggestedCounters || suggestedCounters.length === 0) return null;
+
+    // Find first suggested counter that isn't the member being replaced
+    const replacement = suggestedCounters.find((p) => p.name !== memberName);
+    return replacement || null;
+  };
+
   return (
     <div className="mt-12 bg-white border-4 border-black rounded-3xl p-8 shadow-2xl relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-scarlet rounded-bl-full opacity-10 pointer-events-none"></div>
@@ -1028,23 +764,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           </button>
         </div>
 
-        {/* Suggest Counter Team Action */}
-        {enemyData && enemyTera && (
-          <div className="flex justify-end animate-fade-in">
-            <button
-              onClick={() => onAutoBuildTeam(enemyTera)}
-              disabled={isBuilding}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded font-bold shadow-lg transition-transform active:scale-95 text-sm"
-            >
-              {isBuilding ? (
-                <Loader2 className="animate-spin" size={16} />
-              ) : (
-                <Zap size={16} />
-              )}
-              Suggest Best Team vs {enemyTera}
-            </button>
-          </div>
-        )}
+        {/* Removed: "Auto Build" button - user keeps team locked, replacement suggestions are now inline on cards */}
 
         <div className="flex items-center gap-2 bg-gray-100 p-2.5 rounded-2xl self-start border-2 border-black shadow-inner">
           <Zap
@@ -1343,6 +1063,67 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                       </span>
                     </div>
                   )}
+
+                  {/* Replacement Suggestion - shows when weak to boss */}
+                  {matchup.defensiveScore >= 2 &&
+                    (() => {
+                      const replacement = findReplacementFromSuggested(
+                        member.data.name
+                      );
+                      if (!replacement) return null;
+
+                      return (
+                        <div className="mt-3 bg-amber-50 border-2 border-amber-200 p-3 rounded-xl shadow-inner animate-in slide-in-from-bottom-2">
+                          <div className="text-[10px] text-amber-900 uppercase font-black mb-2 flex items-center gap-1.5 tracking-widest">
+                            <Zap size={12} className="text-amber-600" />{" "}
+                            Consider Instead
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="bg-white p-1 rounded-full border-2 border-amber-200 shadow-sm">
+                              <img
+                                src={
+                                  replacement.sprites.other?.[
+                                    "official-artwork"
+                                  ].front_default ||
+                                  replacement.sprites.front_default
+                                }
+                                alt={replacement.name}
+                                className="w-10 h-10 object-contain"
+                              />
+                            </div>
+                            <div className="flex-grow">
+                              <div className="font-black text-amber-900 capitalize text-sm">
+                                {replacement.name.replace(/-/g, " ")}
+                              </div>
+                              <div className="flex gap-1 mt-1">
+                                {replacement.types.map((t) => (
+                                  <span
+                                    key={t.type.name}
+                                    className="px-1.5 py-0.5 rounded text-[8px] font-black text-white uppercase"
+                                    style={{
+                                      backgroundColor:
+                                        TYPE_COLORS[t.type.name] || "#555",
+                                    }}
+                                  >
+                                    {t.type.name.slice(0, 3)}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            {/* Reason Badge - More prominent */}
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="px-2 py-1 bg-green-100 border border-green-300 text-green-700 rounded-lg text-[10px] font-black uppercase tracking-tight">
+                                {(replacement as any).reason ||
+                                  "Strong Counter"}
+                              </span>
+                              <span className="text-[8px] text-amber-500 font-bold">
+                                vs {enemyTera || enemyData?.types[0]?.type.name}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                 </div>
               );
             })}
@@ -1376,11 +1157,11 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
             </div>
           )}
 
-          {/* Suggested Counters Row */}
-          {enemyTera && caughtPokemon.length > 0 && enemyData && (
+          {/* Suggested Counters Row - now primarily provides data for inline replacement suggestions */}
+          {caughtPokemon.length > 0 && enemyData && (
             <SuggestedCountersRow
               caughtPokemon={caughtPokemon}
-              targetType={enemyTera}
+              targetType={enemyTera || enemyData.types[0]?.type.name}
               suggestedCounters={suggestedCounters}
               setSuggestedCounters={setSuggestedCounters}
               loadingSuggestions={loadingSuggestions}
