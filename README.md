@@ -65,7 +65,7 @@ gcloud services enable cloudbuild.googleapis.com run.googleapis.com
 Run the following single command to build and deploy the container:
 
 ```bash
-gcloud run deploy pokemon-team-analyzer --source . --region us-central1 --allow-unauthenticated
+gcloud run deploy trainer-hub --source . --region us-central1 --allow-unauthenticated
 ```
 
 _Note: To enable Cloud Database sync, ensure `firebase-key.json` is present in the container or mounted as a secret._

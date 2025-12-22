@@ -9,11 +9,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize Firebase Admin
+// Use Application Default Credentials (ADC) in Cloud Run, or service account key locally
 const serviceAccountPath = path.join(__dirname, "firebase-key.json");
 let db;
 
 try {
-  if (fs.existsSync(serviceAccountPath)) {
+  // Check if running in Cloud Run or GCP (has default credentials)
+  if (process.env.GOOGLE_CLOUD_PROJECT || process.env.K_SERVICE) {
+    // Cloud Run: Use Application Default Credentials
+    admin.initializeApp({
+      projectId: process.env.GOOGLE_CLOUD_PROJECT || 'trainerhub-a99e3'
+    });
+    db = admin.firestore();
+    console.log("✓ Firebase Admin initialized with Application Default Credentials (Cloud Run)");
+  } else if (fs.existsSync(serviceAccountPath)) {
+    // Local development: Use service account key file
     const serviceAccount = JSON.parse(
       fs.readFileSync(serviceAccountPath, "utf8")
     );
@@ -30,10 +40,10 @@ try {
       credential: admin.credential.cert(serviceAccount),
     });
     db = admin.firestore();
-    console.log("✓ Firebase Admin initialized successfully");
+    console.log("✓ Firebase Admin initialized with service account key (local)");
   } else {
     console.warn(
-      "⚠️ firebase-key.json not found. Falling back to local file storage."
+      "⚠️ No Firebase credentials found. Falling back to local file storage."
     );
   }
 } catch (error) {
