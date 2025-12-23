@@ -17,6 +17,8 @@ import {
 } from "../services/pokeApi";
 import { PokemonData } from "../types";
 import { TYPE_COLORS } from "../constants";
+import { SANDWICH_RECIPES } from "../data/sandwiches";
+import { Copy, ChefHat } from "lucide-react";
 
 const PokemonFinder: React.FC = () => {
   const [inputValue, setInputValue] = useState("");
@@ -58,6 +60,11 @@ const PokemonFinder: React.FC = () => {
       setLoading(false);
       setLocationLoading(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // You could add a toast here if you had a toast system
   };
 
   // Safe color getter
@@ -191,8 +198,8 @@ const PokemonFinder: React.FC = () => {
                         val >= 100
                           ? "#10b981"
                           : val >= 70
-                          ? "#f59e0b"
-                          : "#ef4444"; // emerald, amber, red
+                            ? "#f59e0b"
+                            : "#ef4444"; // emerald, amber, red
 
                       return (
                         <div key={stat.stat.name} className="group/stat">
@@ -215,63 +222,121 @@ const PokemonFinder: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Column 3: Location List */}
-                <div className="flex-1 min-w-0 bg-white/40 rounded-2xl p-6 border border-white/60 shadow-inner flex flex-col relative overflow-hidden">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-scarlet text-white p-2 rounded-lg shadow-sm">
-                      <MapPin size={18} strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-lg font-black uppercase text-gray-800 tracking-tight">
-                      Encounters
-                    </h3>
-                  </div>
+                {/* Column 3: Location List & Sandwich Chef */}
+                <div className="flex-1 min-w-0 flex flex-col gap-6">
 
-                  <div className="flex-1 overflow-hidden relative">
-                    {locationLoading ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 animate-pulse">
-                        <Loader2 className="animate-spin mb-2" size={32} />
-                        <span className="text-xs font-bold uppercase tracking-widest">
-                          Scanning Map...
-                        </span>
+                  {/* Sandwich Chef Card */}
+                  {pokemon.types[0] && SANDWICH_RECIPES[pokemon.types[0].type.name] && (
+                    <div className="bg-orange-50 rounded-2xl p-5 border-2 border-orange-200 relative overflow-hidden group/sandwich shadow-sm hover:shadow-md transition-shadow">
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <ChefHat size={64} className="text-orange-900" />
                       </div>
-                    ) : locations.length > 0 ? (
-                      <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
-                        <div className="flex flex-wrap gap-2">
-                          {locations.map((loc) => (
-                            <button
-                              key={loc}
-                              onClick={() => {
-                                setSelectedLocation(loc);
-                                setViewMode("map");
-                              }}
-                              className={`px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all duration-200 cursor-pointer select-none text-left border ${
-                                selectedLocation === loc
+
+                      <div className="flex items-center gap-2 mb-3 relative z-10">
+                        <div className="bg-orange-500 text-white p-1.5 rounded-lg shadow-sm">
+                          <ChefHat size={16} />
+                        </div>
+                        <h3 className="text-sm font-black uppercase text-orange-900 tracking-tight">
+                          Chef Recommendation
+                        </h3>
+                      </div>
+
+                      <div className="relative z-10">
+                        <h4 className="font-black text-lg text-gray-800 mb-1">
+                          {SANDWICH_RECIPES[pokemon.types[0].type.name].name}
+                        </h4>
+                        <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-3">
+                          {SANDWICH_RECIPES[pokemon.types[0].type.name].effect}
+                        </p>
+
+                        <div className="flex flex-col gap-2 text-xs text-gray-700 bg-white/60 rounded-xl p-3 border border-orange-100/50 backdrop-blur-sm">
+                          <div>
+                            <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-1">Ingredients</span>
+                            <span className="font-medium leading-relaxed">
+                              {SANDWICH_RECIPES[pokemon.types[0].type.name].ingredients.join(", ")}
+                            </span>
+                          </div>
+                          <div className="h-px bg-orange-200/50 w-full my-0.5"></div>
+                          <div>
+                            <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-1">Seasonings</span>
+                            <span className="font-medium leading-relaxed">
+                              {SANDWICH_RECIPES[pokemon.types[0].type.name].seasonings.join(", ")}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            const recipe = SANDWICH_RECIPES[pokemon.types[0].type.name];
+                            const text = `${recipe.name}\n${recipe.effect}\n\nIngredients: ${recipe.ingredients.join(", ")}\nSeasonings: ${recipe.seasonings.join(", ")}`;
+                            copyToClipboard(text);
+                          }}
+                          className="mt-3 w-full bg-white hover:bg-orange-100 text-orange-700 text-xs font-bold py-2 rounded-lg border border-orange-200 flex items-center justify-center gap-2 transition-colors active:scale-95"
+                        >
+                          <Copy size={12} />
+                          Copy Recipe
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Locations Box */}
+                  <div className="bg-white/40 rounded-2xl p-6 border border-white/60 shadow-inner flex flex-col relative overflow-hidden flex-grow">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-scarlet text-white p-2 rounded-lg shadow-sm">
+                        <MapPin size={18} strokeWidth={2.5} />
+                      </div>
+                      <h3 className="text-lg font-black uppercase text-gray-800 tracking-tight">
+                        Encounters
+                      </h3>
+                    </div>
+
+                    <div className="flex-1 overflow-hidden relative">
+                      {locationLoading ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 animate-pulse">
+                          <Loader2 className="animate-spin mb-2" size={32} />
+                          <span className="text-xs font-bold uppercase tracking-widest">
+                            Scanning Map...
+                          </span>
+                        </div>
+                      ) : locations.length > 0 ? (
+                        <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                          <div className="flex flex-wrap gap-2">
+                            {locations.map((loc) => (
+                              <button
+                                key={loc}
+                                onClick={() => {
+                                  setSelectedLocation(loc);
+                                  setViewMode("map");
+                                }}
+                                className={`px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all duration-200 cursor-pointer select-none text-left border ${selectedLocation === loc
                                   ? "bg-scarlet text-white border-scarlet"
                                   : "bg-white hover:bg-scarlet hover:text-white border-gray-150 text-gray-600"
-                              }`}
-                            >
-                              {loc}
-                            </button>
-                          ))}
+                                  }`}
+                              >
+                                {loc}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-60">
-                        <HelpCircle size={40} className="text-gray-400 mb-2" />
-                        <p className="text-sm font-bold text-gray-600">
-                          No Wild Locations
-                        </p>
-                        <p className="text-[10px] text-gray-400 max-w-[150px] mt-1 leading-tight">
-                          Check Raids, Eggs, or Version Exclusives.
-                        </p>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-60">
+                          <HelpCircle size={40} className="text-gray-400 mb-2" />
+                          <p className="text-sm font-bold text-gray-600">
+                            No Wild Locations
+                          </p>
+                          <p className="text-[10px] text-gray-400 max-w-[150px] mt-1 leading-tight">
+                            Check Raids, Eggs, or Version Exclusives.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {locations.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-black/5 text-[9px] font-bold text-gray-400 text-center uppercase tracking-widest">
+                        Click a location to view on map
                       </div>
                     )}
                   </div>
-                  {locations.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-black/5 text-[9px] font-bold text-gray-400 text-center uppercase tracking-widest">
-                      Click a location to view on map
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -327,8 +392,8 @@ const PokemonFinder: React.FC = () => {
             )
           )}
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

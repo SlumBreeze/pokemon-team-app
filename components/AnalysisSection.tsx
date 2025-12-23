@@ -494,21 +494,44 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         if (speedDiff > 0) speedTier = "faster";
         else if (speedDiff < 0) speedTier = "slower";
 
-        // --- Offensive Calculation ---
-        const attackTypes = new Set<string>();
-        member.data.types.forEach((t) => attackTypes.add(t.type.name));
-        if (member.teraType) attackTypes.add(member.teraType);
+        // --- Offensive Calculation (True Tera Logic) ---
+        const originalTypes = member.data.types.map(t => t.type.name);
+        const teraType = member.teraType || originalTypes[0]; // Default to primary if not set
 
-        let maxMultiplier = 0;
+        // We evaluate all types the Pokemon effectively "has" (Originals + Tera)
+        const attackTypes = new Set([...originalTypes, teraType]);
+
+        let maxDamageScore = 0;
         let bestMoveType = "";
+        let isTeraBoosted = false; // Is this using the 2.0x Adapter boost?
 
         attackTypes.forEach((atkType) => {
-          let mult = getMultiplier(atkType, enemyDefensiveTypes[0]);
+          // 1. Calculate Type Effectiveness (0x, 0.5x, 1x, 2x, 4x)
+          let effectiveness = getMultiplier(atkType, enemyDefensiveTypes[0]);
           if (enemyDefensiveTypes[1])
-            mult *= getMultiplier(atkType, enemyDefensiveTypes[1]);
-          if (mult > maxMultiplier) {
-            maxMultiplier = mult;
+            effectiveness *= getMultiplier(atkType, enemyDefensiveTypes[1]);
+
+          // 2. Calculate Gen 9 STAB Multiplier
+          let stab = 1.0;
+          const isOriginal = originalTypes.includes(atkType);
+          const isTera = atkType === teraType;
+
+          if (isTera && isOriginal) {
+            stab = 2.0; // The "Tera Nuke" (Adaptability)
+          } else if (isTera && !isOriginal) {
+            stab = 1.5; // Defensive Tera providing offensive coverage
+          } else if (!isTera && isOriginal) {
+            stab = 1.5; // Retained STAB from original typing
+          } else {
+            stab = 1.0; // Coverage move (shouldn't happen with this set logic, but safe fallback)
+          }
+
+          const totalScore = effectiveness * stab;
+
+          if (totalScore > maxDamageScore) {
+            maxDamageScore = totalScore;
             bestMoveType = atkType;
+            isTeraBoosted = (stab === 2.0);
           }
         });
 
@@ -534,10 +557,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         else if (maxIncomingDamage <= 0.5) catchInfo.score += 15;
 
         // Track Bests
-        if (maxMultiplier > highestOffense) {
-          highestOffense = maxMultiplier;
+        if (maxDamageScore > highestOffense) {
+          highestOffense = maxDamageScore;
           bestOffId = member.id;
-        } else if (maxMultiplier === highestOffense && speedDiff > 0) {
+        } else if (maxDamageScore === highestOffense && speedDiff > 0) {
           // Tie breaker: Prefer faster Pokemon when offense is equal
           bestOffId = member.id;
         }
@@ -547,14 +570,23 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           bestCatchId = member.id;
         }
 
-        let message = "Neutral Matchup";
-        if (maxMultiplier >= 4) message = "Huge Damage (4x)";
-        else if (maxMultiplier >= 2) message = "Super Effective (2x)";
-        else if (maxMultiplier < 1) message = "Not Effective";
+        // --- Message & Badge Logic ---
+        let message = "Neutral";
+        // Score breakdown: 
+        // 8.0 = 4x Weakness + Tera Adaptability (2.0)
+        // 6.0 = 4x Weakness + Standard STAB (1.5)
+        // 4.0 = 2x Weakness + Tera Adaptability (2.0)
+        // 3.0 = 2x Weakness + Standard STAB (1.5)
+
+        if (maxDamageScore >= 6) message = "NUCLEAR DAMAGE (OHKO)";
+        else if (maxDamageScore >= 4) message = "Massive Damage";
+        else if (maxDamageScore >= 3) message = "Super Effective";
+        else if (maxDamageScore >= 1.5) message = "Solid Hit";
+        else if (maxDamageScore < 1) message = "Not Effective";
 
         return {
           memberId: member.id,
-          offensiveScore: maxMultiplier,
+          offensiveScore: maxDamageScore, // Now includes STAB/Tera
           defensiveScore: maxIncomingDamage,
           bestMoveType,
           speedDiff,
