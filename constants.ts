@@ -1,8 +1,8 @@
 import { TypeName } from './types';
 
 export const TYPE_NAMES: TypeName[] = [
-  "normal", "fire", "water", "electric", "grass", "ice", 
-  "fighting", "poison", "ground", "flying", "psychic", "bug", 
+  "normal", "fire", "water", "electric", "grass", "ice",
+  "fighting", "poison", "ground", "flying", "psychic", "bug",
   "rock", "ghost", "dragon", "steel", "dark", "fairy"
 ];
 
@@ -59,7 +59,33 @@ export const TYPE_COLORS: Record<string, string> = {
 export const getMultiplier = (attacker: string, defender: string): number => {
   const atkIndex = TYPE_NAMES.indexOf(attacker as TypeName);
   const defIndex = TYPE_NAMES.indexOf(defender as TypeName);
-  
+
   if (atkIndex === -1 || defIndex === -1) return 1;
   return TYPE_CHART[atkIndex][defIndex];
 };
+
+// Moves that boost the user's stats significantly for One-Shot strategies
+export const RAID_SETUP_MOVES = [
+  "belly-drum",
+  "swords-dance",
+  "nasty-plot",
+  "calm-mind",
+  "bulk-up",
+  "acid-spray", // Debuffing enemy sp.def counts as setup
+  "screech",    // Debuffing enemy def counts as setup
+  "metal-sound"
+];
+
+// Moves that heal or protect the team
+export const RAID_SUPPORT_MOVES = [
+  "life-dew",
+  "helping-hand",
+  "taunt",
+  "reflect",
+  "light-screen",
+  "clear-smog",
+  "haze",
+  "skill-swap",
+  "chilling-water",
+  "snarl"
+];

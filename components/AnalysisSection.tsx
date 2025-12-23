@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { TeamMember, PokemonData, MatchupResult } from "../types";
 import { fetchPokemon, getPokemonNames } from "../services/pokeApi";
-import { TYPE_COLORS, TYPE_NAMES, getMultiplier } from "../constants";
+import { TYPE_COLORS, TYPE_NAMES, getMultiplier, RAID_SETUP_MOVES, RAID_SUPPORT_MOVES } from "../constants";
 import { BOSSES } from "../bosses";
 import {
   Loader2,
@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Lock,
   PlusCircle,
+  Swords, // Imported Swords
 } from "lucide-react";
 import MoveRecommender from "./MoveRecommender";
 import AutocompleteInput from "./AutocompleteInput";
@@ -330,6 +331,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [suggestedCounters, setSuggestedCounters] = useState<PokemonData[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [isRaidMode, setIsRaidMode] = useState(false);
 
   const handleAnalyze = async (overrideName?: string | React.MouseEvent) => {
     const nameToSearch =
@@ -803,6 +805,20 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           </button>
         </div>
 
+        {/* Toggle Raid Mode */}
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={() => setIsRaidMode(!isRaidMode)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all border-2 shadow-sm ${isRaidMode
+              ? "bg-purple-600 text-white border-purple-800"
+              : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+              }`}
+          >
+            <Swords size={16} />
+            Tera Raid Mode
+          </button>
+        </div>
+
         {/* Removed: "Auto Build" button - user keeps team locked, replacement suggestions are now inline on cards */}
 
 
@@ -908,6 +924,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               let bgGlow = "";
               let shadow = "";
 
+              // Check for Raid Roles
+              const hasSetup = member.data.moves.some(m => RAID_SETUP_MOVES.includes(m.name));
+              const hasSupport = member.data.moves.some(m => RAID_SUPPORT_MOVES.includes(m.name));
+
               if (isBestCounter) {
                 borderColor = "border-amber-500 shadow-xl shadow-amber-500/10";
                 bgGlow = "bg-amber-50/50";
@@ -981,34 +1001,53 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-1 text-[9px] bg-gray-50 border-2 border-black/5 px-2 py-0.5 rounded-full mb-0.5 shadow-inner">
-                        {matchup.speedTier === "faster" && (
-                          <ArrowUpCircle size={14} className="text-green-600" />
-                        )}
-                        {matchup.speedTier === "slower" && (
-                          <ArrowDownCircle size={14} className="text-red-600" />
-                        )}
-                        {matchup.speedTier === "tie" && (
-                          <MinusCircle size={14} className="text-yellow-600" />
-                        )}
-                        <span
-                          className={`font-black uppercase tracking-widest ${matchup.speedTier === "faster"
-                            ? "text-green-600"
-                            : matchup.speedTier === "slower"
-                              ? "text-red-600"
-                              : "text-yellow-600"
-                            }`}
-                        >
-                          {matchup.speedTier === "faster"
-                            ? "Faster"
-                            : matchup.speedTier === "slower"
-                              ? "Slower"
-                              : "Tie"}
-                        </span>
+                    {!isRaidMode && (
+                      <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-1 text-[9px] bg-gray-50 border-2 border-black/5 px-2 py-0.5 rounded-full mb-0.5 shadow-inner">
+                          {matchup.speedTier === "faster" && (
+                            <ArrowUpCircle size={14} className="text-green-600" />
+                          )}
+                          {matchup.speedTier === "slower" && (
+                            <ArrowDownCircle size={14} className="text-red-600" />
+                          )}
+                          {matchup.speedTier === "tie" && (
+                            <MinusCircle size={14} className="text-yellow-600" />
+                          )}
+                          <span
+                            className={`font-black uppercase tracking-widest ${matchup.speedTier === "faster"
+                              ? "text-green-600"
+                              : matchup.speedTier === "slower"
+                                ? "text-red-600"
+                                : "text-yellow-600"
+                              }`}
+                          >
+                            {matchup.speedTier === "faster"
+                              ? "Faster"
+                              : matchup.speedTier === "slower"
+                                ? "Slower"
+                                : "Tie"}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
+
+                  {/* Raid Badges */}
+                  {isRaidMode && (
+                    <div className="flex gap-1 mt-1 flex-wrap">
+                      {hasSetup && (
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[9px] font-black uppercase rounded border border-purple-200 flex items-center gap-1">
+                          ⚡ SELF SETUP
+                        </span>
+                      )}
+                      {hasSupport && (
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black uppercase rounded border border-blue-200 flex items-center gap-1">
+                          🛡️ TEAM SUPPORT
+                        </span>
+                      )}
+                    </div>
+                  )}
+
 
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-black/40 text-[9px] font-black uppercase tracking-widest">
@@ -1080,7 +1119,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                         {matchup.defensiveScore >= 4
                           ? "Takes 4x Damage!"
                           : matchup.defensiveScore >= 2
-                            ? "Takes Super Effective Dmg!"
+                            ? (isRaidMode ? "⛔ UNSAFE FOR RAID" : "Takes Super Effective Dmg!")
                             : "Takes Neutral Damage."}
                       </span>
                     </div>
