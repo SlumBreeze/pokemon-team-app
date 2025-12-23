@@ -65,7 +65,11 @@ gcloud services enable cloudbuild.googleapis.com run.googleapis.com
 Run the following single command to build and deploy the container:
 
 ```bash
-gcloud run deploy trainer-hub --source . --region us-central1 --allow-unauthenticated
+# 1. Build the container image
+gcloud builds submit --tag gcr.io/trainer-hub-481723/trainer-hub
+
+# 2. Deploy the image to Cloud Run
+gcloud run deploy trainer-hub --image gcr.io/trainer-hub-481723/trainer-hub --platform managed --region us-central1 --allow-unauthenticated
 ```
 
 _Note: To enable Cloud Database sync, ensure `firebase-key.json` is present in the container or mounted as a secret._
