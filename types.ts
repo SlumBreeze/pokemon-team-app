@@ -125,4 +125,5 @@ export interface ProfilesState {
   activeProfileId: string;
   profiles: Record<string, Profile>;
   globalCaughtPokemon: string[];
+  lastUpdated?: number; // New: Global sync timestamp
 }

@@ -60,6 +60,10 @@ const App: React.FC = () => {
   const [storageType, setStorageType] = useState<
     "firebase" | "local" | "offline"
   >("offline");
+  const [syncStatus, setSyncStatus] = useState<
+    "synced" | "syncing" | "error" | "local"
+  >("local");
+  const [lastUpdated, setLastUpdated] = useState<number>(0);
 
   // --- Global State ---
   const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder">(
@@ -108,16 +112,43 @@ const App: React.FC = () => {
       let mergedCaught: string[] = [];
       let currentStorageType: "firebase" | "local" | "offline" = "offline";
 
+
+      const serverLastUpdated = serverData?.lastUpdated || 0;
+      const localLastUpdated = localData?.lastUpdated || 0;
+
+      // Merge Logic with Prompt
       if (
         serverData &&
         serverData.profiles &&
         Object.keys(serverData.profiles).length > 0
       ) {
-        // Server has data, use it
-        mergedProfiles = serverData.profiles;
-        mergedActiveId = serverData.activeProfileId;
-        mergedCaught = serverData.globalCaughtPokemon || [];
-        currentStorageType = serverData.storageType || "local"; // Default to local if undefined (legacy server)
+        // Server has data. Check if Local is newer.
+        if (localData && localLastUpdated > serverLastUpdated) {
+          // Local is newer! Ask user.
+          const userChoice = confirm("Local data is newer than Cloud data. Overwrite Cloud with Local?");
+          if (userChoice) {
+            // User chose Local
+            console.log("User chose Local data over Cloud.");
+            mergedProfiles = localData.profiles;
+            mergedActiveId = localData.activeProfileId;
+            mergedCaught = localData.globalCaughtPokemon || [];
+            currentStorageType = serverData.storageType || "local";
+            // Will save to server on next effect run
+          } else {
+            // User chose Cloud
+            console.log("User chose Cloud data.");
+            mergedProfiles = serverData.profiles;
+            mergedActiveId = serverData.activeProfileId;
+            mergedCaught = serverData.globalCaughtPokemon || serverData.globalCaughtPokemon || [];
+            currentStorageType = serverData.storageType || "local";
+          }
+        } else {
+          // Server is newer or equal, use Server
+          mergedProfiles = serverData.profiles;
+          mergedActiveId = serverData.activeProfileId;
+          mergedCaught = serverData.globalCaughtPokemon || [];
+          currentStorageType = serverData.storageType || "local";
+        }
       } else if (
         localData &&
         localData.profiles &&
@@ -146,6 +177,14 @@ const App: React.FC = () => {
       setActiveProfileId(mergedActiveId);
       setGlobalCaughtPokemon(mergedCaught);
       setStorageType(currentStorageType);
+
+      // Update sync status based on storage type
+      if (currentStorageType === "firebase") {
+        setSyncStatus("synced");
+      } else {
+        setSyncStatus("local");
+      }
+
       setIsLoaded(true);
     };
 
@@ -156,10 +195,14 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isLoaded || Object.keys(profiles).length === 0) return;
 
+    const timestamp = Date.now();
+    setLastUpdated(timestamp);
+
     const state: ProfilesState = {
       activeProfileId,
       profiles,
       globalCaughtPokemon,
+      lastUpdated: timestamp,
     };
 
     // 1. Immediate LocalStorage Save
@@ -167,6 +210,11 @@ const App: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       console.error("Failed to save to localStorage", e);
+    }
+
+    // Set status to syncing if we are online/using firebase
+    if (storageType === "firebase") {
+      setSyncStatus("syncing");
     }
 
     // 2. Debounced Server Save
@@ -177,9 +225,11 @@ const App: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(state),
         });
+        setSyncStatus("synced");
       } catch (e) {
         console.error("Failed to save profiles to server:", e);
         setStorageType("offline"); // Update status if save fails
+        setSyncStatus("error");
       }
     }, 500); // Debounce 500ms
 
@@ -372,19 +422,19 @@ const App: React.FC = () => {
       prev.map((member, i) =>
         i === index
           ? {
-              ...member,
-              data: null,
-              selectedAbility: "",
-              abilityDescription: "",
-              teraType: "",
-              heldItem: "",
-              heldItemDescription: "",
-              level: 20,
-              loading: false,
-              error: null,
-              customName: "",
-              locked: false,
-            }
+            ...member,
+            data: null,
+            selectedAbility: "",
+            abilityDescription: "",
+            teraType: "",
+            heldItem: "",
+            heldItemDescription: "",
+            level: 20,
+            loading: false,
+            error: null,
+            customName: "",
+            locked: false,
+          }
           : member
       )
     );
@@ -421,8 +471,7 @@ const App: React.FC = () => {
 
       // Debug logging to verify full Pokedex is being scanned
       console.log(
-        `[Auto Build] Scanning ${
-          caughtPokemon.length
+        `[Auto Build] Scanning ${caughtPokemon.length
         } caught Pokemon. Target Boss Type: ${targetType || "None (General)"}`
       );
 
@@ -574,6 +623,50 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleManualSync = async () => {
+    if (!isLoaded) return;
+
+    setSyncStatus("syncing");
+    const timestamp = Date.now();
+    setLastUpdated(timestamp);
+
+    const state: ProfilesState = {
+      activeProfileId,
+      profiles,
+      globalCaughtPokemon,
+      lastUpdated: timestamp,
+    };
+
+    try {
+      // Also update local storage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/profiles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state),
+      });
+
+      if (res.ok) {
+        setSyncStatus("synced");
+        setStorageType("firebase"); // Assume we are back online if this works
+        alert("Sync completed successfully!");
+      } else {
+        throw new Error("Server responded with error");
+      }
+    } catch (e) {
+      console.error("Manual sync failed:", e);
+      setSyncStatus("error");
+      alert("Sync failed. Checking connection...");
+      // Check if server is reachable at all
+      try {
+        await fetch(`${import.meta.env.VITE_API_URL || ""}/api/profiles`);
+      } catch (pingError) {
+        setStorageType("offline");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-scarlet text-dark font-sans pb-20">
       <input
@@ -601,17 +694,32 @@ const App: React.FC = () => {
                   <p className="text-[10px] text-gray-500 tracking-widest uppercase font-bold">
                     Team Analyzer & Management
                   </p>
-                  {storageType !== "firebase" && (
-                    <span
-                      className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                        storageType === "offline"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-orange-100 text-orange-600"
-                      }`}
-                    >
-                      {storageType === "offline" ? "Offline" : "Local Server"}
+
+                  {/* Sync Status Indicator */}
+                  {syncStatus === "synced" && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-green-100 text-green-700 flex items-center gap-1">
+                      ☁️ Cloud Synced
                     </span>
                   )}
+                  {syncStatus === "syncing" && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-blue-100 text-blue-700 flex items-center gap-1 animate-pulse">
+                      🔄 Syncing...
+                    </span>
+                  )}
+                  {(syncStatus === "local" || syncStatus === "error") && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-red-100 text-red-600 flex items-center gap-1">
+                      ⚠️ Local Only
+                    </span>
+                  )}
+
+                  {/* Manual Sync Button */}
+                  <button
+                    onClick={handleManualSync}
+                    className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors border border-gray-300 ml-1"
+                    title="Force Save to Cloud"
+                  >
+                    Sync Now
+                  </button>
                 </div>
               </div>
             </div>
@@ -620,31 +728,29 @@ const App: React.FC = () => {
             <div className="flex bg-gray-100 rounded-full p-1 border-2 border-black shadow-md">
               <button
                 onClick={() => setActiveTab("builder")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  activeTab === "builder"
-                    ? "bg-scarlet text-white shadow-md"
-                    : "text-gray-500 hover:text-black hover:bg-gray-200"
-                }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "builder"
+                  ? "bg-scarlet text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
               >
                 <Users size={16} /> Team Builder
               </button>
               <button
                 onClick={() => setActiveTab("pokedex")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  activeTab === "pokedex"
-                    ? "bg-black text-white shadow-md"
-                    : "text-gray-500 hover:text-black hover:bg-gray-200"
-                }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "pokedex"
+                  ? "bg-black text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
               >
                 <LayoutGrid size={16} /> My Pokedex
               </button>
+
               <button
                 onClick={() => setActiveTab("finder")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                  activeTab === "finder"
-                    ? "bg-scarlet text-white shadow-md"
-                    : "text-gray-500 hover:text-black hover:bg-gray-200"
-                }`}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "finder"
+                  ? "bg-scarlet text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
               >
                 <MapPin size={16} /> Locations
               </button>
@@ -694,11 +800,10 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsRearranging(!isRearranging)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border-2 ${
-                      isRearranging
-                        ? "bg-amber-500 border-white text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]"
-                        : "bg-white border-black text-black hover:bg-gray-100"
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border-2 ${isRearranging
+                      ? "bg-amber-500 border-white text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                      : "bg-white border-black text-black hover:bg-gray-100"
+                      }`}
                   >
                     {isRearranging ? (
                       <>

@@ -19,6 +19,7 @@ import {
   CheckCircle,
   ArrowRight,
   Lock,
+  PlusCircle,
 } from "lucide-react";
 import MoveRecommender from "./MoveRecommender";
 import AutocompleteInput from "./AutocompleteInput";
@@ -50,13 +51,8 @@ const CATCHING_MOVES = {
 
 const calculateStat = (
   base: number,
-  level: number,
-  isCompetitive: boolean
+  level: number
 ): number => {
-  if (isCompetitive) {
-    const stat = Math.floor(((2 * base + 31 + 63) * level) / 100 + 5);
-    return Math.floor(stat * 1.1);
-  }
   return Math.floor(((2 * base + 31) * level) / 100) + 5;
 };
 
@@ -329,7 +325,6 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   const [enemyName, setEnemyName] = useState("");
   const [enemyLevel, setEnemyLevel] = useState(20);
   const [enemyTera, setEnemyTera] = useState<string>(""); // For bosses
-  const [isCompetitive, setIsCompetitive] = useState(false);
   const [enemyData, setEnemyData] = useState<PokemonData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -473,8 +468,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
       enemyData.stats.find((s) => s.stat.name === "speed")?.base_stat || 0;
     const realEnemySpeed = calculateStat(
       enemyBaseSpeed,
-      enemyLevel,
-      isCompetitive
+      enemyLevel
     );
 
     let highestOffense = -1;
@@ -492,8 +486,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
           0;
         const realMemberSpeed = calculateStat(
           memberBaseSpeed,
-          member.level,
-          isCompetitive
+          member.level
         );
         const speedDiff = realMemberSpeed - realEnemySpeed;
 
@@ -574,38 +567,38 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         };
       })
       .filter(Boolean) as (MatchupResult & {
-      catchScore: number;
-      catchMoves: string[];
-    })[];
+        catchScore: number;
+        catchMoves: string[];
+      })[];
 
     return {
       matchups: results,
       bestCounterId: bestOffId,
       bestCatcherId: highestCatchScore > 10 ? bestCatchId : null,
     };
-  }, [enemyData, team, enemyLevel, enemyTera, isCompetitive]);
+  }, [enemyData, team, enemyLevel, enemyTera]);
 
   const { matchups, bestCounterId, bestCatcherId } = analysisData;
 
   // Team Weakness Matrix Calc
   const getTeamWeaknesses = () => {
-    const weaknesses: { type: string; count: number }[] = [];
+    const weaknesses: { type: string; members: TeamMember[] }[] = [];
 
     TYPE_NAMES.forEach((type) => {
-      let count = 0;
+      const vulnerableMembers: TeamMember[] = [];
       team.forEach((member) => {
         if (!member.data) return;
         const defTypes = member.data.types.map((t) => t.type.name);
         let mult = getMultiplier(type, defTypes[0]);
         if (defTypes[1]) mult *= getMultiplier(type, defTypes[1]);
 
-        if (mult >= 2) count++;
+        if (mult >= 2) vulnerableMembers.push(member);
       });
-      if (count >= 2) {
-        weaknesses.push({ type, count });
+      if (vulnerableMembers.length >= 2) {
+        weaknesses.push({ type, members: vulnerableMembers });
       }
     });
-    return weaknesses.sort((a, b) => b.count - a.count);
+    return weaknesses.sort((a, b) => b.members.length - a.members.length);
   };
 
   const teamWeaknesses = getTeamWeaknesses();
@@ -734,25 +727,39 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               />
             </div>
 
-            <div className="w-28 bg-white border-2 border-black rounded-xl flex flex-col px-3 py-1 justify-center shrink-0 shadow-sm transition-focus focus-within:ring-4 focus-within:ring-scarlet/10">
-              <label className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
-                Level
-              </label>
-              <select
-                value={enemyLevel}
-                onChange={(e) => setEnemyLevel(parseInt(e.target.value))}
-                className="w-full bg-transparent text-black font-black text-lg focus:outline-none cursor-pointer"
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setEnemyLevel((l) => Math.max(1, l - 1))}
+                className="text-gray-400 hover:text-black transition-colors"
               >
-                {Array.from({ length: 100 }, (_, i) => i + 1).map((level) => (
-                  <option
-                    key={level}
-                    value={level}
-                    className="bg-white text-black"
-                  >
-                    {level}
-                  </option>
-                ))}
-              </select>
+                <MinusCircle size={24} />
+              </button>
+              <div className="w-20 bg-white border-2 border-black rounded-xl flex flex-col px-3 py-1 justify-center shrink-0 shadow-sm transition-focus focus-within:ring-4 focus-within:ring-scarlet/10">
+                <label className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
+                  Level
+                </label>
+                <select
+                  value={enemyLevel}
+                  onChange={(e) => setEnemyLevel(parseInt(e.target.value))}
+                  className="w-full bg-transparent text-black font-black text-lg focus:outline-none cursor-pointer"
+                >
+                  {Array.from({ length: 100 }, (_, i) => i + 1).map((level) => (
+                    <option
+                      key={level}
+                      value={level}
+                      className="bg-white text-black"
+                    >
+                      {level}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => setEnemyLevel((l) => Math.min(100, l + 1))}
+                className="text-gray-400 hover:text-black transition-colors"
+              >
+                <PlusCircle size={24} />
+              </button>
             </div>
           </div>
           <button
@@ -766,27 +773,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
         {/* Removed: "Auto Build" button - user keeps team locked, replacement suggestions are now inline on cards */}
 
-        <div className="flex items-center gap-2 bg-gray-100 p-2.5 rounded-2xl self-start border-2 border-black shadow-inner">
-          <Zap
-            size={16}
-            className={isCompetitive ? "text-yellow-500" : "text-gray-400"}
-          />
-          <span className="text-sm text-black font-black uppercase tracking-tighter">
-            Competitive Mode
-          </span>
-          <button
-            onClick={() => setIsCompetitive(!isCompetitive)}
-            className={`w-12 h-6 rounded-full relative transition-all duration-300 ${
-              isCompetitive ? "bg-black" : "bg-gray-300"
-            }`}
-          >
-            <div
-              className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-md transition-all duration-300 ${
-                isCompetitive ? "left-7" : "left-1"
-              }`}
-            />
-          </button>
-        </div>
+
       </div>
 
       {error && (
@@ -824,11 +811,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                 {/* Catch Button */}
                 <button
                   onClick={() => onToggleCaught(enemyData.name)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${
-                    isCaught
-                      ? "bg-green-600 hover:bg-green-500 text-white border border-green-400"
-                      : "bg-white hover:bg-gray-200 text-red-600 border border-red-500"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${isCaught
+                    ? "bg-green-600 hover:bg-green-500 text-white border border-green-400"
+                    : "bg-white hover:bg-gray-200 text-red-600 border border-red-500"
+                    }`}
                   title={isCaught ? "Remove from Pokedex" : "Add to Pokedex"}
                 >
                   {isCaught ? (
@@ -870,8 +856,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   {calculateStat(
                     enemyData.stats.find((s) => s.stat.name === "speed")
                       ?.base_stat || 0,
-                    enemyLevel,
-                    isCompetitive
+                    enemyLevel
                   )}
                 </span>
               </div>
@@ -922,9 +907,8 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   )}
                   {isBestCatcher && (
                     <div
-                      className={`absolute right-0 ${
-                        isBestCounter ? "top-6" : "top-0"
-                      } bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black`}
+                      className={`absolute right-0 ${isBestCounter ? "top-6" : "top-0"
+                        } bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black`}
                     >
                       <CircleDot size={12} /> BEST CATCHER
                     </div>
@@ -947,13 +931,22 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   )}
 
                   <div className="flex justify-between items-start pr-0 mt-1">
-                    <div>
-                      <span className="font-black capitalize text-base block text-black leading-tight">
-                        {member.data.name}
-                      </span>
-                      <span className="text-[10px] text-black/40 font-black uppercase tracking-widest">
-                        LV {member.level}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-white rounded-full border-2 border-black shadow-sm flex items-center justify-center overflow-hidden">
+                        <img
+                          src={member.data.sprites.front_default}
+                          alt={member.data.name}
+                          className="w-10 h-10 object-contain"
+                        />
+                      </div>
+                      <div>
+                        <span className="font-black capitalize text-base block text-black leading-tight">
+                          {member.data.name}
+                        </span>
+                        <span className="text-[10px] text-black/40 font-black uppercase tracking-widest">
+                          LV {member.level}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex flex-col items-end">
@@ -968,19 +961,18 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                           <MinusCircle size={14} className="text-yellow-600" />
                         )}
                         <span
-                          className={`font-black uppercase tracking-widest ${
-                            matchup.speedTier === "faster"
-                              ? "text-green-600"
-                              : matchup.speedTier === "slower"
+                          className={`font-black uppercase tracking-widest ${matchup.speedTier === "faster"
+                            ? "text-green-600"
+                            : matchup.speedTier === "slower"
                               ? "text-red-600"
                               : "text-yellow-600"
-                          }`}
+                            }`}
                         >
                           {matchup.speedTier === "faster"
                             ? "Faster"
                             : matchup.speedTier === "slower"
-                            ? "Slower"
-                            : "Tie"}
+                              ? "Slower"
+                              : "Tie"}
                         </span>
                       </div>
                     </div>
@@ -1002,13 +994,12 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   </div>
 
                   <div
-                    className={`mt-0.5 font-black text-[10px] uppercase tracking-widest ${
-                      matchup.offensiveScore >= 2
-                        ? "text-green-600"
-                        : matchup.offensiveScore < 1
+                    className={`mt-0.5 font-black text-[10px] uppercase tracking-widest ${matchup.offensiveScore >= 2
+                      ? "text-green-600"
+                      : matchup.offensiveScore < 1
                         ? "text-red-600"
                         : "text-black/30"
-                    }`}
+                      }`}
                   >
                     {matchup.message}
                   </div>
@@ -1043,11 +1034,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
                   {matchup.defensiveScore >= 1 && (
                     <div
-                      className={`mt-4 pt-3 border-t border-black/5 text-[10px] flex items-center gap-2 font-black tracking-widest ${
-                        matchup.defensiveScore >= 2
-                          ? "text-red-600"
-                          : "text-black/30"
-                      }`}
+                      className={`mt-4 pt-3 border-t border-black/5 text-[10px] flex items-center gap-2 font-black tracking-widest ${matchup.defensiveScore >= 2
+                        ? "text-red-600"
+                        : "text-black/30"
+                        }`}
                     >
                       {matchup.defensiveScore >= 2 ? (
                         <ShieldAlert size={16} />
@@ -1058,8 +1048,8 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                         {matchup.defensiveScore >= 4
                           ? "Takes 4x Damage!"
                           : matchup.defensiveScore >= 2
-                          ? "Takes Super Effective Dmg!"
-                          : "Takes Neutral Damage."}
+                            ? "Takes Super Effective Dmg!"
+                            : "Takes Neutral Damage."}
                       </span>
                     </div>
                   )}
@@ -1131,26 +1121,58 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
           {/* Team Weakness Matrix */}
           {teamWeaknesses.length > 0 && (
-            <div className="bg-white border-4 border-black rounded-3xl p-4 shadow-2xl mt-4">
-              <h3 className="text-black font-black uppercase text-sm mb-4 flex items-center gap-2 tracking-widest">
-                <ShieldAlert size={18} className="text-scarlet" />
-                Team Defense Gaps
-              </h3>
-              <div className="flex flex-wrap gap-3">
+            <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-2xl mt-4">
+              <div className="mb-4 border-b-2 border-black/5 pb-2">
+                <h3 className="text-black font-black uppercase text-lg flex items-center gap-2 tracking-widest">
+                  <ShieldAlert size={24} className="text-scarlet" />
+                  Team Defense Gaps
+                </h3>
+                <p className="text-xs text-black/50 font-bold mt-1 uppercase tracking-wider pl-8">
+                  Shared weaknesses across your team that opponents can exploit.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {teamWeaknesses.map((w) => (
                   <div
                     key={w.type}
-                    className="flex items-center bg-gray-50 rounded-xl border-2 border-black overflow-hidden shadow-sm"
+                    className="flex flex-col bg-gray-50 rounded-xl border-2 border-black overflow-hidden shadow-sm transition-all hover:shadow-md"
                   >
-                    <span
-                      className="px-3 py-1.5 text-xs font-black text-white uppercase shadow-inner"
-                      style={{ backgroundColor: TYPE_COLORS[w.type] || "#555" }}
-                    >
-                      {w.type}
-                    </span>
-                    <span className="px-3 py-1.5 text-xs text-red-600 font-black uppercase tracking-tighter">
-                      {w.count} Weak
-                    </span>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-3 py-2 bg-white border-b-2 border-black/5">
+                      <span
+                        className="px-2 py-0.5 text-[10px] font-black text-white uppercase rounded shadow-sm"
+                        style={{
+                          backgroundColor: TYPE_COLORS[w.type] || "#555",
+                        }}
+                      >
+                        {w.type}
+                      </span>
+                      <span className="text-[10px] text-red-600 font-black uppercase tracking-wider">
+                        {w.members.length} Vulnerable
+                      </span>
+                    </div>
+
+                    {/* Member Sprites */}
+                    <div className="flex items-center gap-2 p-3 bg-gray-50/50 flex-wrap">
+                      {w.members.map((m) => (
+                        <div
+                          key={m.id}
+                          className="w-8 h-8 bg-white rounded-full border border-black/10 flex items-center justify-center shadow-sm relative group cursor-help"
+                          title={`${m.data?.name} is weak to ${w.type}`}
+                        >
+                          <img
+                            src={m.data?.sprites.front_default}
+                            alt={m.data?.name}
+                            className="w-6 h-6 object-contain"
+                          />
+                          {/* Hover Tooltip */}
+                          <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-2 py-1 rounded font-bold uppercase whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                            {m.data?.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1170,9 +1192,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               enemySpeed={calculateStat(
                 enemyData.stats.find((s) => s.stat.name === "speed")
                   ?.base_stat || 0,
-                enemyLevel,
-                isCompetitive
+                enemyLevel
               )}
+
               team={team}
             />
           )}
