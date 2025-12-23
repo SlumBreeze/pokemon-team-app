@@ -18,7 +18,7 @@ try {
   if (process.env.GOOGLE_CLOUD_PROJECT || process.env.K_SERVICE) {
     // Cloud Run: Use Application Default Credentials
     admin.initializeApp({
-      projectId: process.env.GOOGLE_CLOUD_PROJECT || 'trainerhub-a99e3'
+      projectId: 'trainer-hub-481723'
     });
     db = admin.firestore();
     console.log("✓ Firebase Admin initialized with Application Default Credentials (Cloud Run)");
