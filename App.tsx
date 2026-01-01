@@ -64,6 +64,7 @@ const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [activeProfileId, setActiveProfileId] = useState<string>("");
   const [globalCaughtPokemon, setGlobalCaughtPokemon] = useState<string[]>([]);
+  const [globalShinyPokemon, setGlobalShinyPokemon] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [storageType, setStorageType] = useState<
     "firebase" | "local" | "offline"
@@ -124,6 +125,7 @@ const App: React.FC = () => {
       let mergedProfiles = {};
       let mergedActiveId = "";
       let mergedCaught: string[] = [];
+      let mergedShiny: string[] = [];
       let currentStorageType: "firebase" | "local" | "offline" = "offline";
 
 
@@ -146,6 +148,7 @@ const App: React.FC = () => {
             mergedProfiles = localData.profiles;
             mergedActiveId = localData.activeProfileId;
             mergedCaught = localData.globalCaughtPokemon || [];
+            mergedShiny = localData.globalShinyPokemon || [];
             currentStorageType = serverData.storageType || "local";
             // Will save to server on next effect run
           } else {
@@ -154,6 +157,7 @@ const App: React.FC = () => {
             mergedProfiles = serverData.profiles;
             mergedActiveId = serverData.activeProfileId;
             mergedCaught = serverData.globalCaughtPokemon || serverData.globalCaughtPokemon || [];
+            mergedShiny = serverData.globalShinyPokemon || [];
             currentStorageType = serverData.storageType || "local";
           }
         } else {
@@ -161,6 +165,7 @@ const App: React.FC = () => {
           mergedProfiles = serverData.profiles;
           mergedActiveId = serverData.activeProfileId;
           mergedCaught = serverData.globalCaughtPokemon || [];
+          mergedShiny = serverData.globalShinyPokemon || [];
           currentStorageType = serverData.storageType || "local";
         }
       } else if (
@@ -173,6 +178,7 @@ const App: React.FC = () => {
         mergedProfiles = localData.profiles;
         mergedActiveId = localData.activeProfileId;
         mergedCaught = localData.globalCaughtPokemon || [];
+        mergedShiny = localData.globalShinyPokemon || [];
         currentStorageType = serverData
           ? serverData.storageType || "local"
           : "offline";
@@ -190,6 +196,7 @@ const App: React.FC = () => {
       setProfiles(mergedProfiles);
       setActiveProfileId(mergedActiveId);
       setGlobalCaughtPokemon(mergedCaught);
+      setGlobalShinyPokemon(mergedShiny);
       setStorageType(currentStorageType);
 
       // Update sync status based on storage type
@@ -216,6 +223,7 @@ const App: React.FC = () => {
       activeProfileId,
       profiles,
       globalCaughtPokemon,
+      globalShinyPokemon,
       lastUpdated: timestamp,
     };
 
@@ -248,7 +256,7 @@ const App: React.FC = () => {
     }, 500); // Debounce 500ms
 
     return () => clearTimeout(saveTimeout);
-  }, [profiles, activeProfileId, globalCaughtPokemon, isLoaded]);
+  }, [profiles, activeProfileId, globalCaughtPokemon, globalShinyPokemon, isLoaded]);
 
   // Theme persistence
   useEffect(() => {
@@ -486,6 +494,17 @@ const App: React.FC = () => {
     });
   };
 
+  const toggleShiny = (name: string) => {
+    setGlobalShinyPokemon((prev) => {
+      if (prev.includes(name)) return prev.filter((n) => n !== name);
+      return [...prev, name];
+    });
+    // Also mark as caught if not already
+    if (!globalCaughtPokemon.includes(name)) {
+      setCaughtPokemon((prev) => [...prev, name]);
+    }
+  };
+
   const handleAutoBuild = async (overrideTargetType?: string) => {
     if (caughtPokemon.length === 0) return;
     setIsAutoBuilding(true);
@@ -660,6 +679,7 @@ const App: React.FC = () => {
       activeProfileId,
       profiles,
       globalCaughtPokemon,
+      globalShinyPokemon,
       lastUpdated: timestamp,
     };
 
@@ -913,7 +933,9 @@ const App: React.FC = () => {
             <ErrorBoundary>
               <PokedexView
                 caughtPokemon={caughtPokemon}
+                shinyPokemon={globalShinyPokemon}
                 onToggleCaught={toggleCaught}
+                onToggleShiny={toggleShiny}
                 onAutoBuild={handleAutoBuild}
                 isBuilding={isAutoBuilding}
                 onExport={handleExportPokedex}

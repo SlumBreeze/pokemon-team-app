@@ -25,6 +25,8 @@ import {
   fetchItemDescription,
 } from "../services/pokeApi";
 import AutocompleteInput from "./AutocompleteInput";
+import MoveDetailsPanel from "./MoveDetailsPanel";
+import StatEditor from "./StatEditor";
 import { getRecommendedItems, RecommendedItem } from "../itemRecommendations";
 
 interface TeamSlotProps {
@@ -203,11 +205,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-dark-card border-2 ${
-        member.locked
-          ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-          : "border-black dark:border-dark-border shadow-xl"
-      } rounded-2xl p-3 flex flex-col gap-2 relative hover:shadow-2xl transition-colors duration-200 min-h-[180px]`}
+      className={`bg-white dark:bg-dark-card border-2 ${member.locked
+        ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+        : "border-black dark:border-dark-border shadow-xl"
+        } rounded-2xl p-3 flex flex-col gap-2 relative hover:shadow-2xl transition-colors duration-200 min-h-[180px]`}
     >
       <div className="flex justify-between items-center text-gray-400 dark:text-dark-text-secondary text-[10px] font-black uppercase tracking-widest">
         <span className="flex items-center gap-2">
@@ -218,11 +219,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
           {member.data && (
             <button
               onClick={() => onToggleLock(index)}
-              className={`transition-colors duration-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-border ${
-                member.locked
-                  ? "text-amber-600 hover:text-amber-500"
-                  : "text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text"
-              }`}
+              className={`transition-colors duration-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-border ${member.locked
+                ? "text-amber-600 hover:text-amber-500"
+                : "text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text"
+                }`}
               title={
                 member.locked
                   ? "Unlock Slot"
@@ -251,22 +251,20 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             <button
               disabled={index === 0}
               onClick={() => onMove?.(index, "left")}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${
-                index === 0
-                  ? "opacity-30 grayscale cursor-not-allowed"
-                  : "hover:bg-amber-500 hover:text-white"
-              }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${index === 0
+                ? "opacity-30 grayscale cursor-not-allowed"
+                : "hover:bg-amber-500 hover:text-white"
+                }`}
             >
               <ArrowLeft size={24} strokeWidth={3} />
             </button>
             <button
               disabled={index === 5}
               onClick={() => onMove?.(index, "right")}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${
-                index === 5
-                  ? "opacity-30 grayscale cursor-not-allowed"
-                  : "hover:bg-amber-500 hover:text-white"
-              }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${index === 5
+                ? "opacity-30 grayscale cursor-not-allowed"
+                : "hover:bg-amber-500 hover:text-white"
+                }`}
             >
               <ArrowRight size={24} strokeWidth={3} />
             </button>
@@ -278,9 +276,8 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       )}
 
       <div
-        className={`relative z-10 ${
-          isRearranging ? "opacity-50 grayscale pointer-events-none" : ""
-        }`}
+        className={`relative z-10 ${isRearranging ? "opacity-50 grayscale pointer-events-none" : ""
+          }`}
       >
         <AutocompleteInput
           value={inputValue}
@@ -515,6 +512,20 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
               </div>
             </div>
           )}
+
+          {/* Move Breakdown Panel */}
+          {member.data.moves && member.data.moves.length > 0 && (
+            <MoveDetailsPanel
+              moves={member.data.moves}
+              currentLevel={member.level}
+            />
+          )}
+
+          {/* Stats & Training Editor */}
+          <StatEditor
+            member={member}
+            onUpdate={(updates) => onUpdate(index, updates)}
+          />
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-600 dark:text-dark-text-secondary text-sm italic">

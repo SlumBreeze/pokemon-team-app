@@ -1,4 +1,4 @@
-import { PokemonData, MoveInfo, EvolutionData } from "../types";
+import { PokemonData, MoveInfo, EvolutionData, MoveDetails, EnhancedEncounter } from "../types";
 
 const BASE_URL = "https://pokeapi.co/api/v2";
 
@@ -6,6 +6,7 @@ const BASE_URL = "https://pokeapi.co/api/v2";
 let cachedPokemonNames: string[] = [];
 let cachedItemNames: string[] = [];
 const moveTypeCache: Record<string, string> = {};
+const moveDetailsCache: Record<string, MoveDetails> = {};
 const itemDescCache: Record<string, string> = {};
 const pokemonCache: Record<string, PokemonData> = {}; // Cache full pokemon data
 let cachedPaldeaDex: { name: string; id: number }[] = [];
@@ -321,6 +322,47 @@ export const fetchMoveType = async (url: string): Promise<string> => {
   }
 };
 
+export const fetchMoveDetails = async (moveUrl: string): Promise<MoveDetails> => {
+  if (moveDetailsCache[moveUrl]) return moveDetailsCache[moveUrl];
+
+  try {
+    const res = await fetch(moveUrl);
+    if (!res.ok) throw new Error("Failed to fetch move");
+    const data = await res.json();
+
+    const effectEntry = data.effect_entries?.find(
+      (e: any) => e.language.name === "en"
+    );
+
+    const details: MoveDetails = {
+      name: data.name,
+      power: data.power,
+      accuracy: data.accuracy,
+      damageClass: data.damage_class?.name || 'status',
+      type: data.type?.name || 'normal',
+      effectDescription: effectEntry?.short_effect?.replace(
+        /\$effect_chance%/g,
+        `${data.effect_chance || 0}%`
+      ) || "No description available.",
+      pp: data.pp || 0,
+    };
+
+    moveDetailsCache[moveUrl] = details;
+    return details;
+  } catch (e) {
+    console.error("Error fetching move details:", e);
+    return {
+      name: "unknown",
+      power: null,
+      accuracy: null,
+      damageClass: 'status',
+      type: 'normal',
+      effectDescription: "Failed to load move details.",
+      pp: 0,
+    };
+  }
+};
+
 export const fetchEncounterLocations = async (
   url: string,
   pokemonName?: string
@@ -390,6 +432,133 @@ export const fetchEncounterLocations = async (
     return Array.from(locations).sort();
   } catch (e) {
     console.error("Error fetching encounters:", e);
+    return [];
+  }
+};
+
+// Enhanced encounter data with rarity, method, and conditions
+export const fetchEnhancedEncounters = async (
+  url: string,
+  pokemonName?: string
+): Promise<EnhancedEncounter[]> => {
+  const encounters: EnhancedEncounter[] = [];
+
+  // 1. Check Local Custom Data First (convert to enhanced format)
+  if (pokemonName) {
+    const formattedName = pokemonName
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+    const { LOCAL_ENCOUNTER_LOCATIONS } = await import("./localLocations");
+
+    const localData = LOCAL_ENCOUNTER_LOCATIONS[formattedName] ||
+      LOCAL_ENCOUNTER_LOCATIONS[pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1).toLowerCase()];
+
+    if (localData && localData.length > 0) {
+      return localData.map((loc: string, index: number) => ({
+        locationName: loc,
+        method: 'walk',
+        minLevel: 15,
+        maxLevel: 50,
+        rarity: index < 2 ? 'common' : index < 4 ? 'uncommon' : 'rare',
+        conditions: [],
+        chance: index < 2 ? 30 : index < 4 ? 15 : 5,
+      }));
+    }
+  }
+
+  // 2. Fallback to API with enhanced parsing
+  if (!url) return [];
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+
+    data.forEach((encounter: any) => {
+      const svDetails = encounter.version_details.filter(
+        (detail: any) =>
+          detail.version.name === "scarlet" || detail.version.name === "violet"
+      );
+
+      if (svDetails.length > 0) {
+        svDetails.forEach((versionDetail: any) => {
+          versionDetail.encounter_details.forEach((detail: any) => {
+            const cleanLocationName = encounter.location_area.name
+              .replace(/-/g, " ")
+              .split(" ")
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ");
+
+            // Parse method
+            const method = detail.method?.name || 'walk';
+
+            // Parse conditions
+            const conditions: string[] = [];
+            if (detail.condition_values) {
+              detail.condition_values.forEach((cv: any) => {
+                const condName = cv.name.replace(/-/g, " ");
+                if (condName.includes("time")) {
+                  conditions.push(condName.includes("day") ? "☀️ Day" : "🌙 Night");
+                } else if (condName.includes("rain")) {
+                  conditions.push("🌧️ Rain");
+                } else if (condName.includes("thunder")) {
+                  conditions.push("⛈️ Thunderstorm");
+                } else {
+                  conditions.push(condName);
+                }
+              });
+            }
+
+            // Calculate rarity based on chance
+            const chance = detail.chance || 10;
+            let rarity: 'common' | 'uncommon' | 'rare' | 'very-rare' = 'common';
+            if (chance <= 5) rarity = 'very-rare';
+            else if (chance <= 15) rarity = 'rare';
+            else if (chance <= 30) rarity = 'uncommon';
+
+            // Check if we already have this location+method combo
+            const existing = encounters.find(
+              e => e.locationName === cleanLocationName && e.method === method
+            );
+
+            if (existing) {
+              // Update level range
+              existing.minLevel = Math.min(existing.minLevel, detail.min_level || 1);
+              existing.maxLevel = Math.max(existing.maxLevel, detail.max_level || 100);
+              // Merge conditions
+              conditions.forEach(c => {
+                if (!existing.conditions.includes(c)) {
+                  existing.conditions.push(c);
+                }
+              });
+            } else {
+              encounters.push({
+                locationName: cleanLocationName,
+                method: method,
+                minLevel: detail.min_level || 1,
+                maxLevel: detail.max_level || 100,
+                rarity: rarity,
+                conditions: conditions,
+                chance: chance,
+              });
+            }
+          });
+        });
+      }
+    });
+
+    // Sort by rarity (common first) then by location name
+    const rarityOrder = { 'common': 0, 'uncommon': 1, 'rare': 2, 'very-rare': 3 };
+    return encounters.sort((a, b) => {
+      const rarityDiff = rarityOrder[a.rarity] - rarityOrder[b.rarity];
+      if (rarityDiff !== 0) return rarityDiff;
+      return a.locationName.localeCompare(b.locationName);
+    });
+  } catch (e) {
+    console.error("Error fetching enhanced encounters:", e);
     return [];
   }
 };

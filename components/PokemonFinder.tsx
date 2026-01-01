@@ -14,8 +14,9 @@ import {
   fetchPokemon,
   getPokemonNames,
   fetchEncounterLocations,
+  fetchEnhancedEncounters,
 } from "../services/pokeApi";
-import { PokemonData } from "../types";
+import { PokemonData, EnhancedEncounter } from "../types";
 import { TYPE_COLORS } from "../constants";
 import { SANDWICH_RECIPES } from "../data/sandwiches";
 import { Copy, ChefHat } from "lucide-react";
@@ -24,6 +25,7 @@ const PokemonFinder: React.FC = () => {
   const [inputValue, setInputValue] = useState("");
   const [pokemon, setPokemon] = useState<PokemonData | null>(null);
   const [locations, setLocations] = useState<string[]>([]);
+  const [enhancedEncounters, setEnhancedEncounters] = useState<EnhancedEncounter[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +43,7 @@ const PokemonFinder: React.FC = () => {
     setError(null);
     setPokemon(null);
     setLocations([]);
+    setEnhancedEncounters([]);
 
     try {
       const data = await fetchPokemon(nameToSearch);
@@ -54,6 +57,13 @@ const PokemonFinder: React.FC = () => {
         data.name
       );
       setLocations(locs);
+
+      // Also fetch enhanced encounters
+      const enhanced = await fetchEnhancedEncounters(
+        data.location_area_encounters,
+        data.name
+      );
+      setEnhancedEncounters(enhanced);
       setLocationLoading(false);
     } catch (err: any) {
       setError(err.message || "Pokemon not found");
@@ -299,6 +309,68 @@ const PokemonFinder: React.FC = () => {
                             Scanning Map...
                           </span>
                         </div>
+                      ) : enhancedEncounters.length > 0 ? (
+                        <div className="h-full overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                          {enhancedEncounters.map((enc, idx) => {
+                            const rarityColors: Record<string, { bg: string; text: string; border: string }> = {
+                              'common': { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', border: 'border-green-200 dark:border-green-700' },
+                              'uncommon': { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-400', border: 'border-yellow-200 dark:border-yellow-700' },
+                              'rare': { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-700' },
+                              'very-rare': { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', border: 'border-red-200 dark:border-red-700' },
+                            };
+                            const colors = rarityColors[enc.rarity] || rarityColors['common'];
+
+                            const methodIcons: Record<string, string> = {
+                              'walk': '🚶',
+                              'surf': '🏄',
+                              'old-rod': '🎣',
+                              'good-rod': '🎣',
+                              'super-rod': '🎣',
+                              'cave': '🕳️',
+                              'headbutt': '🌳',
+                            };
+
+                            return (
+                              <button
+                                key={`${enc.locationName}-${enc.method}-${idx}`}
+                                onClick={() => {
+                                  setSelectedLocation(enc.locationName);
+                                  setViewMode("map");
+                                }}
+                                className={`w-full p-3 rounded-xl text-left transition-all duration-200 border ${colors.bg} ${colors.border} hover:scale-[1.02] active:scale-[0.98] shadow-sm`}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-bold text-gray-800 dark:text-dark-text">
+                                    {enc.locationName}
+                                  </span>
+                                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${colors.bg} ${colors.text} border ${colors.border}`}>
+                                    {enc.rarity.replace('-', ' ')}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-[10px]">
+                                  {/* Method */}
+                                  <span className="flex items-center gap-1 bg-white/60 dark:bg-dark-card/60 px-2 py-0.5 rounded-full font-medium text-gray-600 dark:text-dark-text-secondary">
+                                    {methodIcons[enc.method] || '🎮'} {enc.method.replace(/-/g, ' ')}
+                                  </span>
+                                  {/* Level Range */}
+                                  <span className="flex items-center gap-1 bg-white/60 dark:bg-dark-card/60 px-2 py-0.5 rounded-full font-medium text-gray-600 dark:text-dark-text-secondary">
+                                    Lv.{enc.minLevel}-{enc.maxLevel}
+                                  </span>
+                                  {/* Chance */}
+                                  <span className="flex items-center gap-1 bg-white/60 dark:bg-dark-card/60 px-2 py-0.5 rounded-full font-medium text-gray-600 dark:text-dark-text-secondary">
+                                    {enc.chance}%
+                                  </span>
+                                  {/* Conditions */}
+                                  {enc.conditions.map((cond, i) => (
+                                    <span key={i} className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full font-medium">
+                                      {cond}
+                                    </span>
+                                  ))}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       ) : locations.length > 0 ? (
                         <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
                           <div className="flex flex-wrap gap-2">
@@ -331,7 +403,7 @@ const PokemonFinder: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    {locations.length > 0 && (
+                    {(enhancedEncounters.length > 0 || locations.length > 0) && (
                       <div className="mt-4 pt-4 border-t border-black/5 dark:border-dark-border text-[9px] font-bold text-gray-400 dark:text-dark-text-secondary text-center uppercase tracking-widest">
                         Click a location to view on map
                       </div>

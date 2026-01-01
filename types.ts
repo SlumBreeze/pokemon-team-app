@@ -28,6 +28,16 @@ export interface MoveInfo {
   learn_method: string;
 }
 
+export interface MoveDetails {
+  name: string;
+  power: number | null;
+  accuracy: number | null;
+  damageClass: 'physical' | 'special' | 'status';
+  type: string;
+  effectDescription: string;
+  pp: number;
+}
+
 export interface PokemonData {
   id: number;
   name: string;
@@ -69,6 +79,26 @@ export interface TeamMember {
   customName: string;
   evolutionDetails?: EvolutionData | null;
   locked?: boolean;
+  // Training data
+  nature?: NatureName;
+  evs?: StatSpread;
+  ivs?: StatSpread;
+}
+
+export type NatureName =
+  | 'adamant' | 'bashful' | 'bold' | 'brave' | 'calm'
+  | 'careful' | 'docile' | 'gentle' | 'hardy' | 'hasty'
+  | 'impish' | 'jolly' | 'lax' | 'lonely' | 'mild'
+  | 'modest' | 'naive' | 'naughty' | 'quiet' | 'quirky'
+  | 'rash' | 'relaxed' | 'sassy' | 'serious' | 'timid';
+
+export interface StatSpread {
+  hp: number;
+  attack: number;
+  defense: number;
+  specialAttack: number;
+  specialDefense: number;
+  speed: number;
 }
 
 export interface Boss {
@@ -125,5 +155,16 @@ export interface ProfilesState {
   activeProfileId: string;
   profiles: Record<string, Profile>;
   globalCaughtPokemon: string[];
+  globalShinyPokemon: string[];
   lastUpdated?: number; // New: Global sync timestamp
+}
+
+export interface EnhancedEncounter {
+  locationName: string;
+  method: string;
+  minLevel: number;
+  maxLevel: number;
+  rarity: 'common' | 'uncommon' | 'rare' | 'very-rare';
+  conditions: string[];
+  chance: number;
 }
