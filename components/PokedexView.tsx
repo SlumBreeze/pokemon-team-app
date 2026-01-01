@@ -47,14 +47,14 @@ const PokedexView: React.FC<PokedexViewProps> = ({ caughtPokemon, onToggleCaught
               placeholder="Search Collected..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-white border-2 border-black rounded-xl pl-9 pr-4 py-2 text-sm text-black focus:outline-none focus:ring-4 focus:ring-black/5 w-full font-bold"
+              className="bg-white dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-xl pl-9 pr-4 py-2 text-sm text-black dark:text-dark-text focus:outline-none focus:ring-4 focus:ring-black/5 w-full font-bold transition-colors duration-200"
             />
           </div>
 
           <button
             onClick={onAutoBuild}
             disabled={isBuilding || totalCaught === 0}
-            className={`flex items-center gap-2 px-6 py-2 rounded-xl font-black uppercase tracking-widest shadow-lg transition-all border-b-4 ${isBuilding || totalCaught === 0 ? 'bg-gray-400 border-gray-600 text-gray-200 cursor-not-allowed opacity-50' : 'bg-white border-gray-200 hover:bg-gray-50 text-black active:scale-95'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl font-black uppercase tracking-widest shadow-lg transition-all duration-200 border-b-4 ${isBuilding || totalCaught === 0 ? 'bg-gray-400 border-gray-600 text-gray-200 cursor-not-allowed opacity-50' : 'bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border text-black dark:text-dark-text active:scale-95'}`}
             title="Auto-Build Best team from Caught Pokemon"
           >
             {isBuilding ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} className="text-scarlet" />}
@@ -85,16 +85,16 @@ const PokedexView: React.FC<PokedexViewProps> = ({ caughtPokemon, onToggleCaught
                 key={p.name}
                 onClick={() => onToggleCaught(p.name)}
                 className={`group relative rounded-xl p-3 flex flex-col items-center gap-2 transition-all duration-200 border-2 ${isCaught
-                  ? 'bg-white border-black shadow-lg scale-105 z-10'
-                  : 'bg-white/40 border-black/10 hover:border-black/30 opacity-60 hover:opacity-100'
+                  ? 'bg-white dark:bg-dark-card border-black dark:border-dark-border shadow-lg scale-105 z-10'
+                  : 'bg-white/40 dark:bg-dark-card/40 border-black/10 dark:border-dark-border/30 hover:border-black/30 dark:hover:border-dark-border opacity-60 hover:opacity-100'
                   }`}
               >
                 <div className="absolute top-1.5 right-1.5 z-20">
                   {isCaught && <CheckCircle size={16} className="text-green-500 bg-white rounded-full" />}
                 </div>
-                <div className="text-[10px] text-gray-400 font-black absolute top-1.5 left-2 uppercase tracking-tighter">#{String(p.id).padStart(3, '0')}</div>
+                <div className="text-[10px] text-gray-400 dark:text-dark-text-secondary font-black absolute top-1.5 left-2 uppercase tracking-tighter">#{String(p.id).padStart(3, '0')}</div>
 
-                <div className="w-16 h-16 mt-3 flex items-center justify-center p-1 bg-gray-50/50 rounded-full border border-black/5 shadow-inner">
+                <div className="w-16 h-16 mt-3 flex items-center justify-center p-1 bg-gray-50/50 dark:bg-dark-border/50 rounded-full border border-black/5 dark:border-dark-border shadow-inner transition-colors duration-200">
                   <img
                     src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
                     alt={p.name}
@@ -102,7 +102,7 @@ const PokedexView: React.FC<PokedexViewProps> = ({ caughtPokemon, onToggleCaught
                     loading="lazy"
                   />
                 </div>
-                <span className={`text-[10px] capitalize font-black text-center truncate w-full ${isCaught ? 'text-black' : 'text-gray-500'}`}>
+                <span className={`text-[10px] capitalize font-black text-center truncate w-full ${isCaught ? 'text-black dark:text-dark-text' : 'text-gray-500 dark:text-dark-text-secondary'}`}>
                   {p.name.replace(/-/g, ' ')}
                 </span>
               </button>

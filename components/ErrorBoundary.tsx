@@ -64,30 +64,18 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div style={{
-          padding: '20px',
-          margin: '20px',
-          border: '2px solid #f44336',
-          borderRadius: '8px',
-          backgroundColor: '#ffebee'
-        }}>
-          <h2 style={{ color: '#d32f2f', marginTop: 0 }}>Something went wrong</h2>
-          <p style={{ color: '#555' }}>
+        <div className="p-5 m-5 border-2 border-red-500 dark:border-red-400 rounded-lg bg-red-50 dark:bg-red-900/20">
+          <h2 className="text-red-700 dark:text-red-400 mt-0 text-xl font-bold">
+            Something went wrong
+          </h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary">
             An error occurred while rendering this section. Please try refreshing the page.
           </p>
-          <details style={{ marginTop: '10px' }}>
-            <summary style={{ cursor: 'pointer', color: '#d32f2f', fontWeight: 'bold' }}>
+          <details className="mt-2.5">
+            <summary className="cursor-pointer text-red-700 dark:text-red-400 font-bold">
               Error details
             </summary>
-            <pre style={{
-              marginTop: '10px',
-              padding: '10px',
-              backgroundColor: '#fff',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              overflow: 'auto',
-              fontSize: '12px'
-            }}>
+            <pre className="mt-2.5 p-2.5 bg-white dark:bg-dark-card border border-gray-300 dark:border-dark-border rounded overflow-auto text-xs text-gray-800 dark:text-dark-text">
               {this.state.error?.toString()}
               {'\n'}
               {this.state.error?.stack}
@@ -95,19 +83,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </details>
           <button
             onClick={this.reset}
-            style={{
-              marginTop: '15px',
-              padding: '10px 20px',
-              backgroundColor: '#2196f3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1976d2'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2196f3'}
+            className="mt-4 px-5 py-2.5 bg-blue-500 dark:bg-blue-600 text-white border-none rounded cursor-pointer text-sm font-bold hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
             Try Again
           </button>

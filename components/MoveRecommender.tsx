@@ -47,21 +47,21 @@ const MoveRecommender: React.FC<MoveRecommenderProps> = ({ moves, currentLevel, 
     return () => { isMounted = false; };
   }, [moves, currentLevel, targetType]);
 
-  if (loading && recommendedMoves.length === 0) return <div className="text-[10px] text-gray-500 flex items-center gap-1 mt-2"><Loader2 size={10} className="animate-spin" /> checking moves...</div>;
+  if (loading && recommendedMoves.length === 0) return <div className="text-[10px] text-gray-500 dark:text-dark-text-secondary flex items-center gap-1 mt-2"><Loader2 size={10} className="animate-spin" /> checking moves...</div>;
 
   if (recommendedMoves.length === 0) return null;
 
   return (
-    <div className="mt-2 text-xs bg-gray-50 p-2.5 rounded-xl border-2 border-black/10 shadow-inner">
-      <div className="text-gray-400 mb-1.5 text-[10px] uppercase font-black tracking-widest flex justify-between">
+    <div className="mt-2 text-xs bg-gray-50 dark:bg-dark-card p-2.5 rounded-xl border-2 border-black/10 dark:border-dark-border shadow-inner transition-colors duration-200">
+      <div className="text-gray-400 dark:text-dark-text-secondary mb-1.5 text-[10px] uppercase font-black tracking-widest flex justify-between">
         <span>Recommended Moves</span>
         {loading && <Loader2 size={10} className="animate-spin text-scarlet" />}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {recommendedMoves.map(move => (
-          <span key={move.name} className="px-2 py-1 rounded-lg bg-white text-black capitalize border-2 border-black/5 shadow-sm text-[10px] font-bold flex items-center gap-1.5 transition-all">
+          <span key={move.name} className="px-2 py-1 rounded-lg bg-white dark:bg-dark-card text-black dark:text-dark-text capitalize border-2 border-black/5 dark:border-dark-border shadow-sm text-[10px] font-bold flex items-center gap-1.5 transition-colors duration-200">
             {move.name.replace(/-/g, ' ')}
-            <span className="text-[8px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded-full font-black uppercase">Lvl {move.level}</span>
+            <span className="text-[8px] text-gray-400 dark:text-dark-text-secondary bg-gray-50 dark:bg-dark-border px-1.5 py-0.5 rounded-full font-black uppercase">Lvl {move.level}</span>
           </span>
         ))}
       </div>

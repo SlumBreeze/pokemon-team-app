@@ -715,10 +715,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   };
 
   return (
-    <div className="mt-12 bg-white border-4 border-black rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+    <div className="mt-12 bg-white dark:bg-dark-card border-4 border-black dark:border-dark-border rounded-3xl p-8 shadow-2xl relative overflow-hidden transition-colors duration-200">
       <div className="absolute top-0 right-0 w-32 h-32 bg-scarlet rounded-bl-full opacity-10 pointer-events-none"></div>
 
-      <h2 className="text-3xl font-black uppercase tracking-tighter text-black mb-4 flex items-center gap-3">
+      <h2 className="text-3xl font-black uppercase tracking-tighter text-black dark:text-dark-text mb-4 flex items-center gap-3">
         <div className="w-8 h-8 bg-scarlet border-4 border-black rounded-full flex items-center justify-center relative shadow-md">
           <div className="w-2 h-2 bg-white border-2 border-black rounded-full z-10"></div>
           <div className="absolute top-0 left-0 w-full h-1/2 bg-black opacity-20 rounded-t-full"></div>
@@ -729,14 +729,14 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
       {/* Control Panel */}
       <div className="flex flex-col gap-4 mb-4">
         {/* Boss Preset */}
-        <div className="bg-gray-50 border-2 border-black rounded-2xl p-4 shadow-inner">
-          <div className="flex items-center gap-2 text-black font-black uppercase text-xs mb-4">
+        <div className="bg-gray-50 dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-2xl p-4 shadow-inner transition-colors duration-200">
+          <div className="flex items-center gap-2 text-black dark:text-dark-text font-black uppercase text-xs mb-4">
             <Map size={18} className="text-scarlet" />
             <span>Select Major Encounter:</span>
           </div>
           <select
             onChange={(e) => loadBoss(e.target.value)}
-            className="w-full bg-white border-2 border-black text-black font-bold text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-scarlet/10 cursor-pointer"
+            className="w-full bg-white dark:bg-dark-card border-2 border-black dark:border-dark-border text-black dark:text-dark-text font-bold text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-scarlet/10 cursor-pointer transition-colors duration-200"
           >
             <option value="">-- Choose Gym Leader / Boss --</option>
             {BOSSES.map((b) => (
@@ -750,7 +750,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         <div className="flex flex-col md:flex-row gap-4 items-stretch">
           <div className="relative flex-grow flex gap-4 z-20">
             <div className="flex-grow">
-              <div className="text-[10px] text-gray-400 font-bold uppercase mb-1 ml-1">
+              <div className="text-[10px] text-gray-400 dark:text-dark-text-secondary font-bold uppercase mb-1 ml-1">
                 Custom Opponent
               </div>
               <AutocompleteInput
@@ -770,24 +770,24 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setEnemyLevel((l) => Math.max(1, l - 1))}
-                className="text-gray-400 hover:text-black transition-colors"
+                className="text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text transition-colors duration-200"
               >
                 <MinusCircle size={24} />
               </button>
-              <div className="w-20 bg-white border-2 border-black rounded-xl flex flex-col px-3 py-1 justify-center shrink-0 shadow-sm transition-focus focus-within:ring-4 focus-within:ring-scarlet/10">
-                <label className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
+              <div className="w-20 bg-white dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-xl flex flex-col px-3 py-1 justify-center shrink-0 shadow-sm transition-all duration-200 focus-within:ring-4 focus-within:ring-scarlet/10">
+                <label className="text-[10px] text-gray-400 dark:text-dark-text-secondary font-black uppercase tracking-tighter">
                   Level
                 </label>
                 <select
                   value={enemyLevel}
                   onChange={(e) => setEnemyLevel(parseInt(e.target.value))}
-                  className="w-full bg-transparent text-black font-black text-lg focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent text-black dark:text-dark-text font-black text-lg focus:outline-none cursor-pointer"
                 >
                   {Array.from({ length: 100 }, (_, i) => i + 1).map((level) => (
                     <option
                       key={level}
                       value={level}
-                      className="bg-white text-black"
+                      className="bg-white dark:bg-dark-card text-black dark:text-dark-text"
                     >
                       {level}
                     </option>
@@ -796,7 +796,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               </div>
               <button
                 onClick={() => setEnemyLevel((l) => Math.min(100, l + 1))}
-                className="text-gray-400 hover:text-black transition-colors"
+                className="text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text transition-colors duration-200"
               >
                 <PlusCircle size={24} />
               </button>
@@ -815,9 +815,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         <div className="flex justify-end mt-2">
           <button
             onClick={() => setIsRaidMode(!isRaidMode)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all border-2 shadow-sm ${isRaidMode
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 border-2 shadow-sm ${isRaidMode
               ? "bg-purple-600 text-white border-purple-800"
-              : "bg-white text-gray-500 border-gray-200 hover:border-gray-400"
+              : "bg-white dark:bg-dark-card text-gray-500 dark:text-dark-text-secondary border-gray-200 dark:border-dark-border hover:border-gray-400 dark:hover:border-gray-400"
               }`}
           >
             <Swords size={16} />
@@ -840,10 +840,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
       {enemyData && (
         <div className="animate-fade-in">
           {/* Enemy Header */}
-          <div className="flex items-center gap-4 p-4 bg-white rounded-3xl border-4 border-black mb-4 relative overflow-hidden group shadow-2xl">
+          <div className="flex items-center gap-4 p-4 bg-white dark:bg-dark-card rounded-3xl border-4 border-black dark:border-dark-border mb-4 relative overflow-hidden group shadow-2xl transition-colors duration-200">
             <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
 
-            <div className="w-28 h-28 bg-gray-50 rounded-full flex items-center justify-center border-4 border-black z-10 relative shadow-inner">
+            <div className="w-28 h-28 bg-gray-50 dark:bg-dark-card rounded-full flex items-center justify-center border-4 border-black dark:border-dark-border z-10 relative shadow-inner transition-colors duration-200">
               <img
                 src={
                   enemyData.sprites.other?.["official-artwork"].front_default ||
@@ -855,7 +855,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
             </div>
             <div className="z-10 flex-grow">
               <div className="flex items-center gap-4">
-                <h3 className="text-3xl font-black capitalize text-black flex items-center gap-3">
+                <h3 className="text-3xl font-black capitalize text-black dark:text-dark-text flex items-center gap-3">
                   {enemyData.name}
                   <span className="text-sm bg-black text-white px-3 py-1 rounded-full font-bold">
                     Lv. {enemyLevel}
@@ -903,10 +903,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   </span>
                 )}
               </div>
-              <div className="mt-3 text-black font-black text-sm flex items-center gap-2 opacity-60 uppercase tracking-tighter">
+              <div className="mt-3 text-black dark:text-dark-text font-black text-sm flex items-center gap-2 opacity-60 uppercase tracking-tighter">
                 <Gauge size={14} className="text-scarlet" />
                 Est. Speed:{" "}
-                <span className="text-black font-black">
+                <span className="text-black dark:text-dark-text font-black">
                   {calculateStat(
                     enemyData.stats.find((s) => s.stat.name === "speed")
                       ?.base_stat || 0,
@@ -956,7 +956,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               return (
                 <div
                   key={idx}
-                  className={`border-4 ${borderColor} ${bgGlow} ${shadow} bg-white p-2.5 rounded-xl flex flex-col gap-1 relative overflow-hidden transition-all hover:shadow-2xl hover:-translate-y-1 block`}
+                  className={`border-4 ${borderColor} ${bgGlow} ${shadow} bg-white dark:bg-dark-card p-2.5 rounded-xl flex flex-col gap-1 relative overflow-hidden transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 block`}
                 >
                   {isBestCounter && (
                     <div className="absolute right-0 top-0 bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-bl-lg uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black">
@@ -990,7 +990,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
                   <div className="flex justify-between items-start pr-0 mt-1">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white rounded-full border-2 border-black shadow-sm flex items-center justify-center overflow-hidden">
+                      <div className="w-12 h-12 bg-white dark:bg-dark-card rounded-full border-2 border-black dark:border-dark-border shadow-sm flex items-center justify-center overflow-hidden transition-colors duration-200">
                         <img
                           src={member.data.sprites.front_default}
                           alt={member.data.name}
@@ -998,10 +998,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                         />
                       </div>
                       <div>
-                        <span className="font-black capitalize text-base block text-black leading-tight">
+                        <span className="font-black capitalize text-base block text-black dark:text-dark-text leading-tight">
                           {member.data.name}
                         </span>
-                        <span className="text-[10px] text-black/40 font-black uppercase tracking-widest">
+                        <span className="text-[10px] text-black/40 dark:text-dark-text-secondary font-black uppercase tracking-widest">
                           LV {member.level}
                         </span>
                       </div>
@@ -1009,7 +1009,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
                     {!isRaidMode && (
                       <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-1 text-[9px] bg-gray-50 border-2 border-black/5 px-2 py-0.5 rounded-full mb-0.5 shadow-inner">
+                        <div className="flex items-center gap-1 text-[9px] bg-gray-50 dark:bg-dark-border border-2 border-black/5 dark:border-dark-border px-2 py-0.5 rounded-full mb-0.5 shadow-inner transition-colors duration-200">
                           {matchup.speedTier === "faster" && (
                             <ArrowUpCircle size={14} className="text-green-600" />
                           )}
@@ -1056,7 +1056,7 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
 
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-black/40 text-[9px] font-black uppercase tracking-widest">
+                    <span className="text-black/40 dark:text-dark-text-secondary text-[9px] font-black uppercase tracking-widest">
                       Best Type:
                     </span>
                     <span
@@ -1198,9 +1198,9 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
 
           {/* Team Weakness Matrix */}
           {teamWeaknesses.length > 0 && (
-            <div className="bg-white border-4 border-black rounded-3xl p-6 shadow-2xl mt-4">
+            <div className="bg-white dark:bg-dark-card border-4 border-black dark:border-dark-border rounded-3xl p-6 shadow-2xl mt-4 transition-colors duration-200">
               <div className="mb-4 border-b-2 border-black/5 pb-2">
-                <h3 className="text-black font-black uppercase text-lg flex items-center gap-2 tracking-widest">
+                <h3 className="text-black dark:text-dark-text font-black uppercase text-lg flex items-center gap-2 tracking-widest">
                   <ShieldAlert size={24} className="text-scarlet" />
                   Team Defense Gaps
                 </h3>
@@ -1213,10 +1213,10 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                 {teamWeaknesses.map((w) => (
                   <div
                     key={w.type}
-                    className="flex flex-col bg-gray-50 rounded-xl border-2 border-black overflow-hidden shadow-sm transition-all hover:shadow-md"
+                    className="flex flex-col bg-gray-50 dark:bg-dark-card rounded-xl border-2 border-black dark:border-dark-border overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md"
                   >
                     {/* Header */}
-                    <div className="flex items-center justify-between px-3 py-2 bg-white border-b-2 border-black/5">
+                    <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-dark-card border-b-2 border-black/5 dark:border-dark-border transition-colors duration-200">
                       <span
                         className="px-2 py-0.5 text-[10px] font-black text-white uppercase rounded shadow-sm"
                         style={{
@@ -1231,11 +1231,11 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                     </div>
 
                     {/* Member Sprites */}
-                    <div className="flex items-center gap-2 p-3 bg-gray-50/50 flex-wrap">
+                    <div className="flex items-center gap-2 p-3 bg-gray-50/50 dark:bg-dark-border/50 flex-wrap transition-colors duration-200">
                       {w.members.map((m) => (
                         <div
                           key={m.id}
-                          className="w-8 h-8 bg-white rounded-full border border-black/10 flex items-center justify-center shadow-sm relative group cursor-help"
+                          className="w-8 h-8 bg-white dark:bg-dark-card rounded-full border border-black/10 dark:border-dark-border flex items-center justify-center shadow-sm relative group cursor-help transition-colors duration-200"
                           title={`${m.data?.name} is weak to ${w.type}`}
                         >
                           <img

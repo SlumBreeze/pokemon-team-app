@@ -61,16 +61,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
   if (toasts.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '10px',
-      maxWidth: '400px'
-    }}>
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-[400px]">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -93,13 +84,13 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
     }, 300);
   };
 
-  const getBackgroundColor = () => {
+  const getColorClasses = () => {
     switch (toast.type) {
-      case 'success': return '#4caf50';
-      case 'error': return '#f44336';
-      case 'warning': return '#ff9800';
-      case 'info': return '#2196f3';
-      default: return '#333';
+      case 'success': return 'bg-green-500 dark:bg-green-600';
+      case 'error': return 'bg-red-500 dark:bg-red-600';
+      case 'warning': return 'bg-orange-500 dark:bg-orange-600';
+      case 'info': return 'bg-blue-500 dark:bg-blue-600';
+      default: return 'bg-gray-800 dark:bg-gray-700';
     }
   };
 
@@ -115,73 +106,27 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
 
   return (
     <div
-      style={{
-        backgroundColor: getBackgroundColor(),
-        color: 'white',
-        padding: '16px 20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        minWidth: '300px',
-        animation: isExiting
-          ? 'slideOut 0.3s ease-out forwards'
-          : 'slideIn 0.3s ease-out',
-        opacity: isExiting ? 0 : 1,
-        transform: isExiting ? 'translateX(100%)' : 'translateX(0)',
-        transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
-      }}
+      className={`
+        ${getColorClasses()}
+        text-white
+        px-5 py-4 rounded-lg shadow-lg
+        flex items-center justify-between gap-3
+        min-w-[300px]
+        transition-all duration-300 ease-out
+        ${isExiting ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0 animate-in slide-in-from-right-full'}
+      `}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-        <span style={{ fontSize: '20px', fontWeight: 'bold' }}>{getIcon()}</span>
-        <span style={{ fontSize: '14px', lineHeight: '1.4' }}>{toast.message}</span>
+      <div className="flex items-center gap-3 flex-1">
+        <span className="text-xl font-bold">{getIcon()}</span>
+        <span className="text-sm leading-tight">{toast.message}</span>
       </div>
       <button
         onClick={handleClose}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          color: 'white',
-          fontSize: '20px',
-          cursor: 'pointer',
-          padding: '0',
-          width: '24px',
-          height: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: 0.8,
-          transition: 'opacity 0.2s'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+        className="bg-transparent border-none text-white text-2xl cursor-pointer p-0 w-6 h-6 flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity"
+        aria-label="Close notification"
       >
         ×
       </button>
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        @keyframes slideOut {
-          from {
-            opacity: 1;
-            transform: translateX(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateX(100%);
-          }
-        }
-      `}</style>
     </div>
   );
 };

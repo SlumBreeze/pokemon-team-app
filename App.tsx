@@ -18,6 +18,8 @@ import {
   MapPin,
   CheckCircle,
   AlertCircle,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const generateId = () => {
@@ -70,6 +72,12 @@ const App: React.FC = () => {
     "synced" | "syncing" | "error" | "local"
   >("local");
   const [lastUpdated, setLastUpdated] = useState<number>(0);
+
+  // --- Theme State ---
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme-preference');
+    return saved === 'dark';
+  });
 
   // --- Global State ---
   const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder" | "test">(
@@ -241,6 +249,17 @@ const App: React.FC = () => {
 
     return () => clearTimeout(saveTimeout);
   }, [profiles, activeProfileId, globalCaughtPokemon, isLoaded]);
+
+  // Theme persistence
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme-preference', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme-preference', 'light');
+    }
+  }, [isDarkMode]);
 
   // Hydrate evolution info for team members that are missing it
   useEffect(() => {
@@ -674,8 +693,12 @@ const App: React.FC = () => {
     }
   };
 
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
   return (
-    <div className="min-h-screen bg-scarlet text-dark font-sans pb-20">
+    <div className="min-h-screen bg-scarlet dark:bg-dark-bg text-dark dark:text-dark-text font-sans pb-20 transition-colors duration-200">
       <input
         type="file"
         ref={fileInputRef}
@@ -685,7 +708,7 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="bg-white border-b-8 border-black sticky top-0 z-50 shadow-xl">
+      <header className="bg-white dark:bg-dark-card border-b-8 border-black dark:border-dark-border sticky top-0 z-50 shadow-xl transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
@@ -694,11 +717,11 @@ const App: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-1/2 bg-scarlet border-b-2 border-black rounded-t-full"></div>
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-black drop-shadow-sm flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-black dark:text-dark-text drop-shadow-sm flex items-center gap-2">
                   Trainer Hub <span className="text-scarlet">SV</span>
                 </h1>
                 <div className="flex items-center gap-2">
-                  <p className="text-[10px] text-gray-500 tracking-widest uppercase font-bold">
+                  <p className="text-[10px] text-gray-500 dark:text-dark-text-secondary tracking-widest uppercase font-bold">
                     Team Analyzer & Management
                   </p>
 
@@ -722,22 +745,42 @@ const App: React.FC = () => {
                   {/* Manual Sync Button */}
                   <button
                     onClick={handleManualSync}
-                    className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors border border-gray-300 ml-1"
+                    className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border transition-colors border border-gray-300 dark:border-dark-border ml-1"
                     title="Force Save to Cloud"
                   >
                     Sync Now
+                  </button>
+
+                  {/* Theme Toggle Button */}
+                  <button
+                    onClick={toggleTheme}
+                    className="text-[9px] px-2 py-1 rounded font-bold uppercase bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border transition-colors border border-gray-300 dark:border-dark-border ml-1 flex items-center gap-1"
+                    title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                  >
+                    {isDarkMode ? (
+                      <>
+                        <Sun size={12} className="text-yellow-400" />
+                        <span>Light</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon size={12} className="text-indigo-400" />
+                        <span>Dark</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex bg-gray-100 rounded-full p-1 border-2 border-black shadow-md">
+            <div className="flex bg-gray-100 dark:bg-dark-card rounded-full p-1 border-2 border-black dark:border-dark-border shadow-md transition-colors duration-200">
               <button
                 onClick={() => setActiveTab("builder")}
                 className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "builder"
                   ? "bg-scarlet text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  : "text-gray-500 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border"
                   }`}
               >
                 <Users size={16} /> Team Builder
@@ -745,8 +788,8 @@ const App: React.FC = () => {
               <button
                 onClick={() => setActiveTab("pokedex")}
                 className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "pokedex"
-                  ? "bg-black text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  ? "bg-black dark:bg-dark-bg text-white shadow-md"
+                  : "text-gray-500 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border"
                   }`}
               >
                 <LayoutGrid size={16} /> My Pokedex
@@ -756,7 +799,7 @@ const App: React.FC = () => {
                 onClick={() => setActiveTab("finder")}
                 className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "finder"
                   ? "bg-scarlet text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  : "text-gray-500 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border"
                   }`}
               >
                 <MapPin size={16} /> Locations
@@ -766,7 +809,7 @@ const App: React.FC = () => {
                 onClick={() => setActiveTab("test")}
                 className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "test"
                   ? "bg-orange-500 text-white shadow-md"
-                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  : "text-gray-500 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border"
                   }`}
               >
                 <AlertCircle size={16} /> Test Errors
@@ -785,17 +828,17 @@ const App: React.FC = () => {
                 onDuplicateProfile={duplicateProfile}
                 globalCaughtPokemon={globalCaughtPokemon}
               />
-              <div className="h-6 w-px bg-gray-200" />
+              <div className="h-6 w-px bg-gray-200 dark:bg-dark-border" />
               <button
                 onClick={handleImportClick}
-                className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200"
+                className="p-2 text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-full transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-border"
                 title="Import Save File"
               >
                 <Upload size={16} />
               </button>
               <button
                 onClick={handleExport}
-                className="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200"
+                className="p-2 text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-full transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-border"
                 title="Export Save File"
               >
                 <Save size={16} />
@@ -894,7 +937,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="text-center py-8 text-white/60 text-sm">
+      <footer className="text-center py-8 text-white/60 dark:text-dark-text-secondary text-sm">
         <p>
           &copy; {new Date().getFullYear()} Trainer Hub Analyzer. Pokémon Data
           provided by PokéAPI.

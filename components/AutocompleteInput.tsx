@@ -99,11 +99,11 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           }, 200);
         }}
         placeholder={placeholder}
-        className="w-full bg-gray-50 border-2 border-black rounded-xl px-4 py-2 text-sm text-black focus:outline-none focus:ring-4 focus:ring-black/5 transition-all pr-10 placeholder:text-gray-400 font-bold"
+        className="w-full bg-gray-50 dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-xl px-4 py-2 text-sm text-black dark:text-dark-text focus:outline-none focus:ring-4 focus:ring-black/5 transition-colors duration-200 pr-10 placeholder:text-gray-400 dark:placeholder:text-dark-text-secondary font-bold"
         autoComplete="off"
       />
 
-      <div className="absolute right-3 top-2.5 text-black pointer-events-none">
+      <div className="absolute right-3 top-2.5 text-black dark:text-dark-text pointer-events-none">
         {isLoading ? (
           <Loader2 size={16} className="animate-spin text-scarlet" />
         ) : (
@@ -112,7 +112,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full bg-white border-2 border-black rounded-xl shadow-2xl max-h-56 overflow-y-auto mt-2 animate-in fade-in zoom-in-95 duration-150 p-1">
+        <ul className="absolute z-50 w-full bg-white dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-xl shadow-2xl max-h-56 overflow-y-auto mt-2 animate-in fade-in zoom-in-95 duration-150 p-1">
           {suggestions.map((name) => (
             <li
               key={name}
@@ -120,7 +120,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                 e.preventDefault(); // Prevent input blur
                 handleSuggestionClick(name);
               }}
-              className="px-4 py-2.5 text-sm text-black hover:bg-scarlet hover:text-white rounded-lg cursor-pointer capitalize font-bold transition-colors mb-0.5 last:mb-0"
+              className="px-4 py-2.5 text-sm text-black dark:text-dark-text hover:bg-scarlet hover:text-white rounded-lg cursor-pointer capitalize font-bold transition-colors duration-200 mb-0.5 last:mb-0"
             >
               {name.replace(/-/g, ' ')}
             </li>
