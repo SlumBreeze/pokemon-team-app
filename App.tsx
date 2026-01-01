@@ -754,18 +754,18 @@ const App: React.FC = () => {
                   {/* Theme Toggle Button */}
                   <button
                     onClick={toggleTheme}
-                    className="text-[9px] px-2 py-1 rounded font-bold uppercase bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border transition-colors border border-gray-300 dark:border-dark-border ml-1 flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg font-bold text-xs uppercase bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border transition-colors border-2 border-gray-300 dark:border-dark-border ml-2 flex items-center gap-1.5 shadow-sm"
                     title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                     aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                   >
                     {isDarkMode ? (
                       <>
-                        <Sun size={12} className="text-yellow-400" />
+                        <Sun size={14} className="text-yellow-400" />
                         <span>Light</span>
                       </>
                     ) : (
                       <>
-                        <Moon size={12} className="text-indigo-400" />
+                        <Moon size={14} className="text-indigo-400" />
                         <span>Dark</span>
                       </>
                     )}
