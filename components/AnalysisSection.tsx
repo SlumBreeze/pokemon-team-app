@@ -92,62 +92,68 @@ const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
       }
 
       setLoadingSuggestions(true);
-      const results: (PokemonData & { score: number; reason: string })[] = [];
-      const batchSize = 20; // Increased batch for faster processing
-      // Scan ALL caught Pokemon (no artificial limit)
+      try {
+        const results: (PokemonData & { score: number; reason: string })[] = [];
+        const batchSize = 20; // Increased batch for faster processing
+        // Scan ALL caught Pokemon (no artificial limit)
 
-      for (let i = 0; i < caughtPokemon.length; i += batchSize) {
-        const batch = caughtPokemon.slice(i, i + batchSize);
-        const batchData = await Promise.all(
-          batch.map(async (name) => {
-            try {
-              const data = await fetchPokemon(name);
+        for (let i = 0; i < caughtPokemon.length; i += batchSize) {
+          const batch = caughtPokemon.slice(i, i + batchSize);
+          const batchData = await Promise.all(
+            batch.map(async (name) => {
+              try {
+                const data = await fetchPokemon(name);
 
-              // Scoring Logic
-              let offenseMult = 0;
-              data.types.forEach((t) => {
-                const mult = getMultiplier(t.type.name, targetType);
-                if (mult > offenseMult) offenseMult = mult;
-              });
+                // Scoring Logic
+                let offenseMult = 0;
+                data.types.forEach((t) => {
+                  const mult = getMultiplier(t.type.name, targetType);
+                  if (mult > offenseMult) offenseMult = mult;
+                });
 
-              let defenseMult = 1;
-              data.types.forEach((t) => {
-                defenseMult *= getMultiplier(targetType, t.type.name);
-              });
+                let defenseMult = 1;
+                data.types.forEach((t) => {
+                  defenseMult *= getMultiplier(targetType, t.type.name);
+                });
 
-              // Heuristic: (Offense * 10) + (Defense bonus)
-              // Defense bonus: Immunity (0x) = 15, Resistance (0.5x) = 5, Neutral = 0, Weak = -10
-              let defenseBonus = 0;
-              if (defenseMult === 0) defenseBonus = 15;
-              else if (defenseMult <= 0.5) defenseBonus = 5;
-              else if (defenseMult >= 2) defenseBonus = -10;
+                // Heuristic: (Offense * 10) + (Defense bonus)
+                // Defense bonus: Immunity (0x) = 15, Resistance (0.5x) = 5, Neutral = 0, Weak = -10
+                let defenseBonus = 0;
+                if (defenseMult === 0) defenseBonus = 15;
+                else if (defenseMult <= 0.5) defenseBonus = 5;
+                else if (defenseMult >= 2) defenseBonus = -10;
 
-              const score = offenseMult * 10 + defenseBonus;
+                const score = offenseMult * 10 + defenseBonus;
 
-              let reason = "";
-              if (defenseMult === 0) reason = `Immune to ${targetType}`;
-              else if (offenseMult >= 4) reason = `Huge 4x Damage`;
-              else if (offenseMult >= 2) reason = `Super Effective`;
-              else if (defenseMult <= 0.5) reason = `Resists ${targetType}`;
+                let reason = "";
+                if (defenseMult === 0) reason = `Immune to ${targetType}`;
+                else if (offenseMult >= 4) reason = `Huge 4x Damage`;
+                else if (offenseMult >= 2) reason = `Super Effective`;
+                else if (defenseMult <= 0.5) reason = `Resists ${targetType}`;
 
-              return score >= 10 ? { ...data, score, reason } : null;
-            } catch (e) {
-              return null;
-            }
-          })
-        );
+                return score >= 10 ? { ...data, score, reason } : null;
+              } catch (e) {
+                return null;
+              }
+            })
+          );
 
-        batchData.forEach((p) => {
-          if (p) results.push(p);
-        });
+          batchData.forEach((p) => {
+            if (p) results.push(p);
+          });
 
-        if (results.length >= 12) break; // Find a good pool
+          if (results.length >= 12) break; // Find a good pool
+        }
+
+        // Sort by score and take top 6
+        const sorted = results.sort((a, b) => b.score - a.score).slice(0, 6);
+        setSuggestedCounters(sorted as any);
+      } catch (error) {
+        console.error("Error fetching counter suggestions:", error);
+        setSuggestedCounters([]);
+      } finally {
+        setLoadingSuggestions(false);
       }
-
-      // Sort by score and take top 6
-      const sorted = results.sort((a, b) => b.score - a.score).slice(0, 6);
-      setSuggestedCounters(sorted as any);
-      setLoadingSuggestions(false);
     };
 
     fetchCounters();

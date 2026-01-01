@@ -118,8 +118,13 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
     if (!itemToSet) return;
 
     onUpdate(index, { heldItem: itemToSet });
-    const desc = await fetchItemDescription(itemToSet);
-    onUpdate(index, { heldItem: itemToSet, heldItemDescription: desc });
+    try {
+      const desc = await fetchItemDescription(itemToSet);
+      onUpdate(index, { heldItem: itemToSet, heldItemDescription: desc });
+    } catch (err) {
+      console.error("Failed to fetch item description:", err);
+      onUpdate(index, { heldItem: itemToSet, heldItemDescription: "Description unavailable" });
+    }
   };
 
   const handleRecommendationHover = async (itemName: string | null) => {
@@ -127,8 +132,13 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       setPreviewItemDesc(null);
       return;
     }
-    const desc = await fetchItemDescription(itemName);
-    setPreviewItemDesc(desc);
+    try {
+      const desc = await fetchItemDescription(itemName);
+      setPreviewItemDesc(desc);
+    } catch (err) {
+      console.error("Failed to fetch item description on hover:", err);
+      setPreviewItemDesc("Description unavailable");
+    }
   };
 
   const clearSlot = () => {
@@ -395,13 +405,21 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
                     (a) => a.ability.name === newAbility
                   );
                   if (abilityData) {
-                    const desc = await fetchAbilityDescription(
-                      abilityData.ability.url
-                    );
-                    onUpdate(index, {
-                      selectedAbility: newAbility,
-                      abilityDescription: desc,
-                    });
+                    try {
+                      const desc = await fetchAbilityDescription(
+                        abilityData.ability.url
+                      );
+                      onUpdate(index, {
+                        selectedAbility: newAbility,
+                        abilityDescription: desc,
+                      });
+                    } catch (err) {
+                      console.error("Failed to fetch ability description:", err);
+                      onUpdate(index, {
+                        selectedAbility: newAbility,
+                        abilityDescription: "Description unavailable",
+                      });
+                    }
                   }
                 }}
                 className="w-full bg-gray-50 border-2 border-black rounded-lg px-2 py-1.5 text-xs text-black font-bold focus:outline-none focus:ring-2 focus:ring-scarlet/20 capitalize cursor-pointer"

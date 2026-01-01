@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Profile } from "../types";
+import { useToast } from "./Toast";
 import {
   User,
   ChevronDown,
@@ -32,6 +33,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
   onDuplicateProfile,
   globalCaughtPokemon,
 }) => {
+  const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
@@ -90,7 +92,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
     e.stopPropagation();
 
     if (Object.keys(profiles).length <= 1) {
-      alert("Cannot delete the only profile!");
+      showToast("Cannot delete the only profile!", "warning");
       return;
     }
 

@@ -4,9 +4,12 @@ import AnalysisSection from "./components/AnalysisSection";
 import PokedexView from "./components/PokedexView";
 import ProfileManager from "./components/ProfileManager";
 import PokemonFinder from "./components/PokemonFinder";
+import ErrorHandlingTest from "./components/ErrorHandlingTest";
 import { TeamMember, Profile, ProfilesState } from "./types";
 import { fetchPokemon, fetchEvolutionInfo } from "./services/pokeApi";
 import { generateBestTeam } from "./utils/teamOptimizer";
+import { useToast } from "./components/Toast";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import {
   Save,
   Upload,
@@ -14,6 +17,7 @@ import {
   Users,
   MapPin,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 const generateId = () => {
@@ -52,6 +56,8 @@ const createDefaultProfile = (): Profile => ({
 });
 
 const App: React.FC = () => {
+  const { showToast } = useToast();
+
   // --- Profile State ---
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [activeProfileId, setActiveProfileId] = useState<string>("");
@@ -66,7 +72,7 @@ const App: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<number>(0);
 
   // --- Global State ---
-  const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder">(
+  const [activeTab, setActiveTab] = useState<"builder" | "pokedex" | "finder" | "test">(
     "builder"
   );
   const [isAutoBuilding, setIsAutoBuilding] = useState(false);
@@ -549,6 +555,7 @@ const App: React.FC = () => {
       setActiveTab("builder"); // Switch back to view result
     } catch (e) {
       console.error("Auto build failed", e);
+      showToast("Failed to auto-build team. Please try again.", "error");
     } finally {
       setIsAutoBuilding(false);
     }
@@ -592,9 +599,9 @@ const App: React.FC = () => {
           setGlobalCaughtPokemon(parsed.globalCaughtPokemon);
         else if (parsed.caughtPokemon && Array.isArray(parsed.caughtPokemon))
           setGlobalCaughtPokemon(parsed.caughtPokemon); // Legacy support
-        alert("Save file imported successfully!");
+        showToast("Save file imported successfully!", "success");
       } catch (err) {
-        alert("Failed to parse save file.");
+        showToast("Failed to parse save file.", "error");
       }
     };
     reader.readAsText(file);
@@ -650,14 +657,14 @@ const App: React.FC = () => {
       if (res.ok) {
         setSyncStatus("synced");
         setStorageType("firebase"); // Assume we are back online if this works
-        alert("Sync completed successfully!");
+        showToast("Sync completed successfully!", "success");
       } else {
         throw new Error("Server responded with error");
       }
     } catch (e) {
       console.error("Manual sync failed:", e);
       setSyncStatus("error");
-      alert("Sync failed. Checking connection...");
+      showToast("Sync failed. Checking connection...", "error");
       // Check if server is reachable at all
       try {
         await fetch(`${import.meta.env.VITE_API_URL || ""}/api/profiles`);
@@ -754,6 +761,16 @@ const App: React.FC = () => {
               >
                 <MapPin size={16} /> Locations
               </button>
+
+              <button
+                onClick={() => setActiveTab("test")}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "test"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "text-gray-500 hover:text-black hover:bg-gray-200"
+                  }`}
+              >
+                <AlertCircle size={16} /> Test Errors
+              </button>
             </div>
 
             {/* Profile & Save Tools */}
@@ -818,47 +835,61 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {team.map((member, index) => (
-                  <TeamSlot
-                    key={member.id}
-                    index={index}
-                    member={member}
-                    onUpdate={updateMember}
-                    onClear={clearMember}
-                    onToggleLock={toggleLock}
-                    isRearranging={isRearranging}
-                    onMove={moveMember}
-                  />
-                ))}
-              </div>
+              <ErrorBoundary>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {team.map((member, index) => (
+                    <TeamSlot
+                      key={member.id}
+                      index={index}
+                      member={member}
+                      onUpdate={updateMember}
+                      onClear={clearMember}
+                      onToggleLock={toggleLock}
+                      isRearranging={isRearranging}
+                      onMove={moveMember}
+                    />
+                  ))}
+                </div>
+              </ErrorBoundary>
             </div>
-            <AnalysisSection
-              team={team}
-              onBossSelect={setTargetBossType}
-              caughtPokemon={caughtPokemon}
-              onToggleCaught={toggleCaught}
-              onAutoBuildTeam={handleAutoBuild}
-              isBuilding={isAutoBuilding}
-            />
+            <ErrorBoundary>
+              <AnalysisSection
+                team={team}
+                onBossSelect={setTargetBossType}
+                caughtPokemon={caughtPokemon}
+                onToggleCaught={toggleCaught}
+                onAutoBuildTeam={handleAutoBuild}
+                isBuilding={isAutoBuilding}
+              />
+            </ErrorBoundary>
           </div>
         )}
 
         {activeTab === "pokedex" && (
           <div className="animate-in slide-in-from-right-4 duration-300">
-            <PokedexView
-              caughtPokemon={caughtPokemon}
-              onToggleCaught={toggleCaught}
-              onAutoBuild={handleAutoBuild}
-              isBuilding={isAutoBuilding}
-              onExport={handleExportPokedex}
-            />
+            <ErrorBoundary>
+              <PokedexView
+                caughtPokemon={caughtPokemon}
+                onToggleCaught={toggleCaught}
+                onAutoBuild={handleAutoBuild}
+                isBuilding={isAutoBuilding}
+                onExport={handleExportPokedex}
+              />
+            </ErrorBoundary>
           </div>
         )}
 
         {activeTab === "finder" && (
           <div className="animate-in slide-in-from-right-4 duration-300">
-            <PokemonFinder />
+            <ErrorBoundary>
+              <PokemonFinder />
+            </ErrorBoundary>
+          </div>
+        )}
+
+        {activeTab === "test" && (
+          <div className="animate-in slide-in-from-right-4 duration-300">
+            <ErrorHandlingTest />
           </div>
         )}
       </main>
