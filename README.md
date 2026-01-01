@@ -1,8 +1,15 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Trainer Hub SV: Team Analyzer
+# 🔴 Trainer Hub SV 🟣
+
+### *The Ultimate Team Builder & Matchup Analyzer for Pokémon Scarlet & Violet*
+
+[![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+
+</div>
 
 A comprehensive Pokémon Scarlet & Violet companion app for team building, matchup analysis, and Pokédex tracking. Optimize your journey through Paldea with data-driven insights.
 
