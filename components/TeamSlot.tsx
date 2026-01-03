@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { TeamMember, TypeName } from "../types";
 import { TYPE_NAMES, TYPE_COLORS } from "../constants";
 import {
@@ -53,6 +53,9 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
   const [previewItemDesc, setPreviewItemDesc] = useState<string | null>(null);
 
+  // Ref to track the latest search request to prevent race conditions
+  const lastRequestId = useRef(0);
+
   useEffect(() => {
     setInputValue(member.customName);
   }, [member.customName]);
@@ -78,10 +81,15 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
 
     if (nameToSearch !== inputValue) setInputValue(nameToSearch);
 
+    const requestId = ++lastRequestId.current;
+
     onUpdate(index, { loading: true, error: null, customName: nameToSearch });
 
     try {
       const data = await fetchPokemon(nameToSearch);
+
+      // Check if this is still the latest request
+      if (requestId !== lastRequestId.current) return;
 
       const defaultAbilityName = data.abilities[0]?.ability.name || "";
       let desc = "";
@@ -90,7 +98,13 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
         desc = await fetchAbilityDescription(abilityData.ability.url);
       }
 
+      // Check again after second await
+      if (requestId !== lastRequestId.current) return;
+
       const evoInfo = await fetchEvolutionInfo(data.speciesUrl, data.name);
+
+      // Check again after third await
+      if (requestId !== lastRequestId.current) return;
 
       onUpdate(index, {
         loading: false,
@@ -107,6 +121,9 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       setInputValue("");
       setItemInputValue("");
     } catch (err: any) {
+      // Check if this is still the latest request
+      if (requestId !== lastRequestId.current) return;
+
       onUpdate(index, {
         loading: false,
         data: null,
@@ -125,7 +142,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       onUpdate(index, { heldItem: itemToSet, heldItemDescription: desc });
     } catch (err) {
       console.error("Failed to fetch item description:", err);
-      onUpdate(index, { heldItem: itemToSet, heldItemDescription: "Description unavailable" });
+      onUpdate(index, {
+        heldItem: itemToSet,
+        heldItemDescription: "Description unavailable",
+      });
     }
   };
 
@@ -205,10 +225,11 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-dark-card border-2 ${member.locked
-        ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-        : "border-black dark:border-dark-border shadow-xl"
-        } rounded-2xl p-3 flex flex-col gap-2 relative hover:shadow-2xl transition-colors duration-200 min-h-[180px]`}
+      className={`bg-white dark:bg-dark-card border-2 ${
+        member.locked
+          ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+          : "border-black dark:border-dark-border shadow-xl"
+      } rounded-2xl p-3 flex flex-col gap-2 relative hover:shadow-2xl transition-colors duration-200 min-h-[180px]`}
     >
       <div className="flex justify-between items-center text-gray-400 dark:text-dark-text-secondary text-[10px] font-black uppercase tracking-widest">
         <span className="flex items-center gap-2">
@@ -219,10 +240,11 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
           {member.data && (
             <button
               onClick={() => onToggleLock(index)}
-              className={`transition-colors duration-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-border ${member.locked
-                ? "text-amber-600 hover:text-amber-500"
-                : "text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text"
-                }`}
+              className={`transition-colors duration-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-dark-border ${
+                member.locked
+                  ? "text-amber-600 hover:text-amber-500"
+                  : "text-gray-400 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text"
+              }`}
               title={
                 member.locked
                   ? "Unlock Slot"
@@ -251,20 +273,22 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             <button
               disabled={index === 0}
               onClick={() => onMove?.(index, "left")}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${index === 0
-                ? "opacity-30 grayscale cursor-not-allowed"
-                : "hover:bg-amber-500 hover:text-white"
-                }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${
+                index === 0
+                  ? "opacity-30 grayscale cursor-not-allowed"
+                  : "hover:bg-amber-500 hover:text-white"
+              }`}
             >
               <ArrowLeft size={24} strokeWidth={3} />
             </button>
             <button
               disabled={index === 5}
               onClick={() => onMove?.(index, "right")}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${index === 5
-                ? "opacity-30 grayscale cursor-not-allowed"
-                : "hover:bg-amber-500 hover:text-white"
-                }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white dark:bg-dark-card border-4 border-amber-500 text-amber-500 shadow-xl active:scale-90 ${
+                index === 5
+                  ? "opacity-30 grayscale cursor-not-allowed"
+                  : "hover:bg-amber-500 hover:text-white"
+              }`}
             >
               <ArrowRight size={24} strokeWidth={3} />
             </button>
@@ -276,8 +300,9 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
       )}
 
       <div
-        className={`relative z-10 ${isRearranging ? "opacity-50 grayscale pointer-events-none" : ""
-          }`}
+        className={`relative z-10 ${
+          isRearranging ? "opacity-50 grayscale pointer-events-none" : ""
+        }`}
       >
         <AutocompleteInput
           value={inputValue}
@@ -307,8 +332,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             <div className="w-12 h-12 flex-shrink-0 bg-gray-50 dark:bg-dark-card rounded-full flex items-center justify-center border-2 border-black dark:border-dark-border relative shadow-inner">
               <img
                 src={
-                  member.data.sprites.other?.["official-artwork"]
-                    .front_default || member.data.sprites.front_default
+                  member.data.sprites?.other?.["official-artwork"]
+                    ?.front_default ||
+                  member.data.sprites?.front_default ||
+                  "" // Fallback to empty string or placeholder
                 }
                 alt={member.data.name}
                 className="w-10 h-10 object-contain z-10"
@@ -325,7 +352,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
                     className="w-6 h-6 flex items-center justify-center bg-white dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-full hover:bg-gray-100 dark:hover:bg-dark-border active:scale-95 transition-colors duration-200 shadow-sm"
                     title="Decrease Level"
                   >
-                    <Minus size={10} className="text-black dark:text-dark-text stroke-[3px]" />
+                    <Minus
+                      size={10}
+                      className="text-black dark:text-dark-text stroke-[3px]"
+                    />
                   </button>
                   <div className="flex items-center justify-center bg-gray-100 dark:bg-dark-border rounded-full px-2.5 border-2 border-black dark:border-dark-border h-[34px] min-w-[54px] shadow-inner">
                     <span className="text-[10px] text-gray-500 dark:text-dark-text-secondary font-black uppercase mr-1 select-none">
@@ -360,7 +390,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
                     className="w-6 h-6 flex items-center justify-center bg-white dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-full hover:bg-gray-100 dark:hover:bg-dark-border active:scale-95 transition-colors duration-200 shadow-sm"
                     title="Increase Level"
                   >
-                    <Plus size={10} className="text-black dark:text-dark-text stroke-[3px]" />
+                    <Plus
+                      size={10}
+                      className="text-black dark:text-dark-text stroke-[3px]"
+                    />
                   </button>
                 </div>
               </div>
@@ -411,7 +444,10 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
                         abilityDescription: desc,
                       });
                     } catch (err) {
-                      console.error("Failed to fetch ability description:", err);
+                      console.error(
+                        "Failed to fetch ability description:",
+                        err
+                      );
                       onUpdate(index, {
                         selectedAbility: newAbility,
                         abilityDescription: "Description unavailable",
