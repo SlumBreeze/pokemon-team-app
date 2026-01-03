@@ -9,6 +9,7 @@ interface AutocompleteInputProps {
   placeholder?: string;
   isLoading?: boolean;
   onBlur?: () => void;
+  className?: string;
 }
 
 const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
@@ -18,7 +19,8 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   fetchData,
   placeholder,
   isLoading,
-  onBlur
+  onBlur,
+  className = ""
 }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -99,7 +101,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           }, 200);
         }}
         placeholder={placeholder}
-        className="w-full bg-gray-50 dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-xl px-4 py-2 text-sm text-black dark:text-dark-text focus:outline-none focus:ring-4 focus:ring-black/5 transition-colors duration-200 pr-10 placeholder:text-gray-400 dark:placeholder:text-dark-text-secondary font-bold"
+        className={`w-full bg-gray-50 dark:bg-dark-card border-2 border-black dark:border-dark-border rounded-xl px-4 py-2 text-sm text-black dark:text-dark-text focus:outline-none focus:ring-4 focus:ring-black/5 transition-colors duration-200 pr-10 placeholder:text-gray-400 dark:placeholder:text-dark-text-secondary font-bold ${className}`}
         autoComplete="off"
       />
 

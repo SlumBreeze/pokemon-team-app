@@ -46,6 +46,7 @@ const INITIAL_TEAM: TeamMember[] = Array.from({ length: 6 }, (_, i) => ({
   error: null,
   customName: "",
   locked: false,
+  moves: [null, null, null, null],
 }));
 
 const STORAGE_KEY = "sv-profiles-v1";

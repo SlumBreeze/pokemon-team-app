@@ -79,6 +79,7 @@ export interface TeamMember {
   customName: string;
   evolutionDetails?: EvolutionData | null;
   locked?: boolean;
+  moves?: (MoveDetails | null)[];
   // Training data
   nature?: NatureName;
   evs?: StatSpread;

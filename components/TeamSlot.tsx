@@ -25,7 +25,8 @@ import {
   fetchItemDescription,
 } from "../services/pokeApi";
 import AutocompleteInput from "./AutocompleteInput";
-import MoveDetailsPanel from "./MoveDetailsPanel";
+// import MoveDetailsPanel from "./MoveDetailsPanel";
+import MoveSelector from "./MoveSelector";
 import StatEditor from "./StatEditor";
 import { getRecommendedItems, RecommendedItem } from "../itemRecommendations";
 
@@ -549,11 +550,12 @@ const TeamSlot: React.FC<TeamSlotProps> = ({
             </div>
           )}
 
-          {/* Move Breakdown Panel */}
-          {member.data.moves && member.data.moves.length > 0 && (
-            <MoveDetailsPanel
-              moves={member.data.moves}
-              currentLevel={member.level}
+          {/* Move Selector */}
+          {member.data.moves && (
+            <MoveSelector
+              memberData={member.data}
+              selectedMoves={member.moves || [null, null, null, null]}
+              onUpdate={(newMoves) => onUpdate(index, { moves: newMoves })}
             />
           )}
 

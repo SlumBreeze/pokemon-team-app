@@ -31,7 +31,10 @@ export const calculateCatchScore = (
   let score = 0;
   const helpfulMoves: string[] = [];
 
-  const memberMoves = member.data.moves.map((m) => m.name);
+  // Use selected moves if available, otherwise consider all learnable moves (potential)
+  const memberMoves = (member.moves && member.moves.some(m => m !== null))
+    ? member.moves.filter((m): m is any => m !== null).map(m => m.name)
+    : member.data.moves.map((m) => m.name);
 
   // 1. False Swipe Utility
   const hasSwipe = memberMoves.some((m) =>
