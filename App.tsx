@@ -77,6 +77,7 @@ const App: React.FC = () => {
   // --- Theme State ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme-preference');
+    if (saved === null) return true;
     return saved === 'dark';
   });
 
@@ -803,15 +804,7 @@ const App: React.FC = () => {
                 <MapPin size={16} /> Locations
               </button>
 
-              <button
-                onClick={() => setActiveTab("test")}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === "test"
-                  ? "bg-orange-500 text-white shadow-md"
-                  : "text-gray-500 dark:text-dark-text-secondary hover:text-black dark:hover:text-dark-text hover:bg-gray-200 dark:hover:bg-dark-border"
-                  }`}
-              >
-                <AlertCircle size={16} /> Test Errors
-              </button>
+
             </div>
 
             {/* Profile & Save Tools */}
@@ -945,6 +938,12 @@ const App: React.FC = () => {
         <p className="text-xs mt-1">
           Pokémon and Pokémon character names are trademarks of Nintendo.
         </p>
+        <button
+          onClick={() => setActiveTab("test")}
+          className="text-xs mt-2 hover:text-white dark:hover:text-dark-text transition-colors"
+        >
+          Test Errors
+        </button>
       </footer>
     </div>
   );
