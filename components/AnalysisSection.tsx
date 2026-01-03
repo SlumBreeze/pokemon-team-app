@@ -1,29 +1,25 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { TeamMember, PokemonData, MatchupResult } from "../types";
+import React, { useState } from "react";
+import { TeamMember, PokemonData } from "../types";
 import { fetchPokemon, getPokemonNames } from "../services/pokeApi";
-import { TYPE_COLORS, TYPE_NAMES, getMultiplier, RAID_SETUP_MOVES, RAID_SUPPORT_MOVES } from "../constants";
+import { TYPE_COLORS } from "../constants";
 import { BOSSES } from "../bosses";
 import {
   Loader2,
-  Sword,
   ShieldAlert,
-  ArrowUpCircle,
-  ArrowDownCircle,
   MinusCircle,
   Gauge,
-  Skull,
-  Zap,
   Map,
   CircleDot,
-  Crown,
   CheckCircle,
-  ArrowRight,
-  Lock,
   PlusCircle,
-  Swords, // Imported Swords
+  Swords,
 } from "lucide-react";
-import MoveRecommender from "./MoveRecommender";
 import AutocompleteInput from "./AutocompleteInput";
+import SuggestedCountersRow from "./SuggestedCountersRow";
+import TeamWeaknessMatrix from "./TeamWeaknessMatrix";
+import MatchupCard from "./MatchupCard";
+import { useCombatAnalysis } from "../hooks/useCombatAnalysis";
+import { calculateStat } from "../utils/combatUtils";
 
 interface AnalysisSectionProps {
   team: TeamMember[];
@@ -33,293 +29,6 @@ interface AnalysisSectionProps {
   onAutoBuildTeam: (startType?: string) => void;
   isBuilding: boolean;
 }
-
-// Special moves for catching
-const CATCHING_MOVES = {
-  SWIPE: ["false-swipe", "hold-back"],
-  SLEEP: [
-    "spore",
-    "sleep-powder",
-    "hypnosis",
-    "yawn",
-    "sing",
-    "lovely-kiss",
-    "dark-void",
-    "grass-whistle",
-  ],
-  PARALYZE: ["thunder-wave", "glare", "stun-spore", "nuzzle"],
-};
-
-const calculateStat = (
-  base: number,
-  level: number
-): number => {
-  return Math.floor(((2 * base + 31) * level) / 100) + 5;
-};
-
-// --- Suggested Counters Row Component ---
-interface SuggestedCountersRowProps {
-  caughtPokemon: string[];
-  targetType: string;
-  suggestedCounters: PokemonData[];
-  setSuggestedCounters: React.Dispatch<React.SetStateAction<PokemonData[]>>;
-  loadingSuggestions: boolean;
-  setLoadingSuggestions: React.Dispatch<React.SetStateAction<boolean>>;
-  enemyLevel: number;
-  enemySpeed: number;
-  team: TeamMember[];
-}
-
-const SuggestedCountersRow: React.FC<SuggestedCountersRowProps> = ({
-  caughtPokemon,
-  targetType,
-  suggestedCounters,
-  setSuggestedCounters,
-  loadingSuggestions,
-  setLoadingSuggestions,
-  enemyLevel,
-  enemySpeed,
-  team,
-}) => {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [selectedLevel, setSelectedLevel] = useState(20);
-
-  useEffect(() => {
-    const fetchCounters = async () => {
-      if (!targetType || caughtPokemon.length === 0) {
-        setSuggestedCounters([]);
-        return;
-      }
-
-      setLoadingSuggestions(true);
-      try {
-        const results: (PokemonData & { score: number; reason: string })[] = [];
-        const batchSize = 20; // Increased batch for faster processing
-        // Scan ALL caught Pokemon (no artificial limit)
-
-        for (let i = 0; i < caughtPokemon.length; i += batchSize) {
-          const batch = caughtPokemon.slice(i, i + batchSize);
-          const batchData = await Promise.all(
-            batch.map(async (name) => {
-              try {
-                const data = await fetchPokemon(name);
-
-                // Scoring Logic
-                let offenseMult = 0;
-                data.types.forEach((t) => {
-                  const mult = getMultiplier(t.type.name, targetType);
-                  if (mult > offenseMult) offenseMult = mult;
-                });
-
-                let defenseMult = 1;
-                data.types.forEach((t) => {
-                  defenseMult *= getMultiplier(targetType, t.type.name);
-                });
-
-                // Heuristic: (Offense * 10) + (Defense bonus)
-                // Defense bonus: Immunity (0x) = 15, Resistance (0.5x) = 5, Neutral = 0, Weak = -10
-                let defenseBonus = 0;
-                if (defenseMult === 0) defenseBonus = 15;
-                else if (defenseMult <= 0.5) defenseBonus = 5;
-                else if (defenseMult >= 2) defenseBonus = -10;
-
-                const score = offenseMult * 10 + defenseBonus;
-
-                let reason = "";
-                if (defenseMult === 0) reason = `Immune to ${targetType}`;
-                else if (offenseMult >= 4) reason = `Huge 4x Damage`;
-                else if (offenseMult >= 2) reason = `Super Effective`;
-                else if (defenseMult <= 0.5) reason = `Resists ${targetType}`;
-
-                return score >= 10 ? { ...data, score, reason } : null;
-              } catch (e) {
-                return null;
-              }
-            })
-          );
-
-          batchData.forEach((p) => {
-            if (p) results.push(p);
-          });
-
-          if (results.length >= 12) break; // Find a good pool
-        }
-
-        // Sort by score and take top 6
-        const sorted = results.sort((a, b) => b.score - a.score).slice(0, 6);
-        setSuggestedCounters(sorted as any);
-      } catch (error) {
-        console.error("Error fetching counter suggestions:", error);
-        setSuggestedCounters([]);
-      } finally {
-        setLoadingSuggestions(false);
-      }
-    };
-
-    fetchCounters();
-  }, [targetType, caughtPokemon, setSuggestedCounters, setLoadingSuggestions]);
-
-  // Reset selection when counters change
-  useEffect(() => {
-    setSelectedId(null);
-  }, [suggestedCounters]);
-
-  const selectedPokemon = suggestedCounters.find((p) => p.id === selectedId);
-
-  // Calculate stats for selected Pokemon
-  const getAnalysis = () => {
-    if (!selectedPokemon) return null;
-
-    const baseSpeed =
-      selectedPokemon.stats.find((s) => s.stat.name === "speed")?.base_stat ||
-      0;
-    const mySpeed =
-      Math.floor(((2 * baseSpeed + 31) * selectedLevel) / 100) + 5;
-    const speedDiff = mySpeed - enemySpeed;
-    const isFaster = speedDiff > 0;
-
-    // Get best offensive multiplier
-    let bestMult = 0;
-    selectedPokemon.types.forEach((t) => {
-      const mult = getMultiplier(t.type.name, targetType);
-      if (mult > bestMult) bestMult = mult;
-    });
-
-    // Get defensive multiplier (Damage taken from targetType)
-    let defenseMult = 1;
-    selectedPokemon.types.forEach((t) => {
-      defenseMult *= getMultiplier(targetType, t.type.name);
-    });
-
-    const isStillEffective = bestMult >= 2;
-    const isResistant = defenseMult <= 0.5 && defenseMult > 0;
-    const isImmune = defenseMult === 0;
-    const levelAdvantage = selectedLevel >= enemyLevel;
-
-    return {
-      mySpeed,
-      speedDiff,
-      isFaster,
-      bestMult,
-      isStillEffective,
-      isResistant,
-      isImmune,
-      levelAdvantage,
-      defenseMult,
-    };
-  };
-
-  const analysis = getAnalysis();
-
-  // Unified Verdict Logic
-  const getVerdict = () => {
-    if (!analysis) return null;
-
-    if (!analysis.levelAdvantage) {
-      return {
-        label: "Under-leveled",
-        message: `Needs to be at least level ${enemyLevel}`,
-        color: "bg-orange-600 text-white",
-        icon: <ShieldAlert size={16} />,
-      };
-    }
-
-    if (analysis.isImmune) {
-      return {
-        label: "Exceptional Choice!",
-        message: `Completely Immune to ${targetType}!`,
-        color: "bg-green-600 text-white",
-        icon: <Crown size={18} />,
-      };
-    }
-
-    if (analysis.isResistant && analysis.isStillEffective) {
-      return {
-        label: "Great Counter",
-        message: "Resistant & Super Effective!",
-        color: "bg-green-600 text-white",
-        icon: <Sword size={16} />,
-      };
-    }
-
-    if (analysis.isResistant) {
-      return {
-        label: "Solid Defense",
-        message: `Resists ${targetType} (Safe to switch in)`,
-        color: "bg-blue-600 text-white",
-        icon: <Gauge size={16} />,
-      };
-    }
-
-    if (analysis.isStillEffective) {
-      return {
-        label: "Offensive Choice",
-        message: "High damage, but watch your health",
-        color: "bg-yellow-600 text-black",
-        icon: <Zap size={16} />,
-      };
-    }
-
-    return {
-      label: "May not be effective",
-      message: "Neutral matchup, consider alternatives",
-      color: "bg-red-600 text-white",
-      icon: <MinusCircle size={16} />,
-    };
-  };
-
-  const verdict = getVerdict();
-
-  // Find the weakest party member to suggest replacing
-  const getReplacementSuggestion = () => {
-    if (!selectedPokemon) return null;
-
-    // Find party member with worst matchup against targetType (ignore locked state for analysis)
-    let worstMember: TeamMember | null = null;
-    let worstScore = Infinity;
-
-    team.forEach((member) => {
-      if (!member.data) return;
-
-      // Calculate offensive score against targetType
-      let bestMult = 0;
-      member.data.types.forEach((t) => {
-        const mult = getMultiplier(t.type.name, targetType);
-        if (mult > bestMult) bestMult = mult;
-      });
-
-      if (bestMult < worstScore) {
-        worstScore = bestMult;
-        worstMember = member;
-      }
-    });
-
-    return worstMember;
-  };
-
-  const replacementSuggestion = getReplacementSuggestion();
-
-  // Get next best alternative if current selection is not 'Great/Solid'
-  const getNextBest = () => {
-    if (!verdict) return null;
-
-    // Suggest alternative if not Exceptional or Great
-    const isSubOptimal =
-      verdict.label !== "Exceptional Choice!" &&
-      verdict.label !== "Great Counter";
-    if (!isSubOptimal) return null;
-
-    // Find next counter that isn't the current selection
-    const alternatives = suggestedCounters.filter((p) => p.id !== selectedId);
-    return alternatives.length > 0 ? alternatives[0] : null;
-  };
-
-  const nextBest = getNextBest();
-
-  // This component now only fetches data for inline suggestions
-  // No visible UI - all suggestions appear inline on matchup cards
-  return null;
-};
 
 const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   team,
@@ -389,319 +98,16 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
     }
   };
 
-  // Logic extracted to useMemo below to prevent re-renders
-  const analysisData = useMemo(() => {
-    if (!enemyData)
-      return { matchups: [], bestCounterId: null, bestCatcherId: null };
-
-    const calculateCatchScore = (
-      member: TeamMember,
-      enemy: PokemonData
-    ): { score: number; moves: string[] } => {
-      if (!member.data) return { score: 0, moves: [] };
-
-      let score = 0;
-      const helpfulMoves: string[] = [];
-
-      const memberMoves = member.data.moves.map((m) => m.name);
-
-      // 1. False Swipe Utility
-      const hasSwipe = memberMoves.some((m) =>
-        CATCHING_MOVES.SWIPE.includes(m)
-      );
-      const enemyIsGhost =
-        enemy.types.some((t) => t.type.name === "ghost") ||
-        enemyTera === "ghost";
-
-      if (hasSwipe) {
-        if (!enemyIsGhost) {
-          score += 50;
-          helpfulMoves.push("False Swipe");
-        } else {
-          // It has the move but it won't work
-          score += 0;
-        }
-      }
-
-      // 2. Status Utility
-      const hasSleep = memberMoves.some((m) =>
-        CATCHING_MOVES.SLEEP.includes(m)
-      );
-      const enemyIsGrass =
-        enemy.types.some((t) => t.type.name === "grass") ||
-        enemyTera === "grass"; // Immunity to powders
-
-      if (hasSleep) {
-        if (enemyIsGrass && memberMoves.includes("spore")) {
-          // Spore fails on grass
-        } else {
-          score += 40;
-          helpfulMoves.push("Sleep Move");
-        }
-      } else {
-        const hasParalyze = memberMoves.some((m) =>
-          CATCHING_MOVES.PARALYZE.includes(m)
-        );
-        const enemyIsElectric =
-          enemy.types.some((t) => t.type.name === "electric") ||
-          enemyTera === "electric";
-        const enemyIsGround =
-          enemy.types.some((t) => t.type.name === "ground") ||
-          enemyTera === "ground";
-
-        if (hasParalyze) {
-          if (enemyIsElectric) {
-            // Fails
-          } else if (enemyIsGround && memberMoves.includes("thunder-wave")) {
-            // Fails
-          } else {
-            score += 25;
-            helpfulMoves.push("Paralyze Move");
-          }
-        }
-      }
-
-      return { score, moves: helpfulMoves };
-    };
-
-    const enemyDefensiveTypes = enemyTera
-      ? [enemyTera]
-      : enemyData.types.map((t) => t.type.name);
-
-    const enemyAttackTypes = new Set<string>();
-    enemyData.types.forEach((t) => enemyAttackTypes.add(t.type.name));
-    if (enemyTera) enemyAttackTypes.add(enemyTera);
-
-    const enemyBaseSpeed =
-      enemyData.stats.find((s) => s.stat.name === "speed")?.base_stat || 0;
-    const realEnemySpeed = calculateStat(
-      enemyBaseSpeed,
-      enemyLevel
-    );
-
-    let highestOffense = -1;
-    let highestCatchScore = -1;
-    let bestOffId = null;
-    let bestCatchId = null;
-
-    const results = team
-      .map((member) => {
-        if (!member.data) return null;
-
-        // Speed Calc
-        const memberBaseSpeed =
-          member.data.stats.find((s) => s.stat.name === "speed")?.base_stat ||
-          0;
-        const realMemberSpeed = calculateStat(
-          memberBaseSpeed,
-          member.level
-        );
-        const speedDiff = realMemberSpeed - realEnemySpeed;
-
-        let speedTier: MatchupResult["speedTier"] = "tie";
-        if (speedDiff > 0) speedTier = "faster";
-        else if (speedDiff < 0) speedTier = "slower";
-
-        // --- Offensive Calculation (True Tera Logic) ---
-        const originalTypes = member.data.types.map(t => t.type.name);
-        const teraType = member.teraType || originalTypes[0]; // Default to primary if not set
-
-        // We evaluate all types the Pokemon effectively "has" (Originals + Tera)
-        const attackTypes = new Set([...originalTypes, teraType]);
-
-        let maxDamageScore = 0;
-        let bestMoveType = "";
-        let isTeraBoosted = false; // Is this using the 2.0x Adapter boost?
-
-        attackTypes.forEach((atkType) => {
-          // 1. Calculate Type Effectiveness (0x, 0.5x, 1x, 2x, 4x)
-          let effectiveness = getMultiplier(atkType, enemyDefensiveTypes[0]);
-          if (enemyDefensiveTypes[1])
-            effectiveness *= getMultiplier(atkType, enemyDefensiveTypes[1]);
-
-          // 2. Calculate Gen 9 STAB Multiplier
-          let stab = 1.0;
-          const isOriginal = originalTypes.includes(atkType);
-          const isTera = atkType === teraType;
-
-          if (isTera && isOriginal) {
-            stab = 2.0; // The "Tera Nuke" (Adaptability)
-          } else if (isTera && !isOriginal) {
-            stab = 1.5; // Defensive Tera providing offensive coverage
-          } else if (!isTera && isOriginal) {
-            stab = 1.5; // Retained STAB from original typing
-          } else {
-            stab = 1.0; // Coverage move (shouldn't happen with this set logic, but safe fallback)
-          }
-
-          const totalScore = effectiveness * stab;
-
-          if (totalScore > maxDamageScore) {
-            maxDamageScore = totalScore;
-            bestMoveType = atkType;
-            isTeraBoosted = (stab === 2.0);
-          }
-        });
-
-        // --- Defensive Calculation ---
-        const isTeraDefensivelyActive =
-          member.teraType && member.teraType !== member.data.types[0].type.name;
-        const myDefensiveTypes = isTeraDefensivelyActive
-          ? [member.teraType]
-          : member.data.types.map((t) => t.type.name);
-
-        let maxIncomingDamage = 0;
-        enemyAttackTypes.forEach((enemyType) => {
-          let mult = getMultiplier(enemyType, myDefensiveTypes[0]);
-          if (myDefensiveTypes[1])
-            mult *= getMultiplier(enemyType, myDefensiveTypes[1]);
-          if (mult > maxIncomingDamage) maxIncomingDamage = mult;
-        });
-
-        // --- Catch Calculation ---
-        const catchInfo = calculateCatchScore(member, enemyData);
-        // Penalize catch score if we die easily
-        if (maxIncomingDamage >= 2) catchInfo.score -= 20;
-        else if (maxIncomingDamage <= 0.5) catchInfo.score += 15;
-
-        // Track Bests
-        if (maxDamageScore > highestOffense) {
-          highestOffense = maxDamageScore;
-          bestOffId = member.id;
-        } else if (maxDamageScore === highestOffense && speedDiff > 0) {
-          // Tie breaker: Prefer faster Pokemon when offense is equal
-          bestOffId = member.id;
-        }
-
-        if (catchInfo.score > highestCatchScore) {
-          highestCatchScore = catchInfo.score;
-          bestCatchId = member.id;
-        }
-
-        // --- Message & Badge Logic ---
-        let message = "Neutral";
-        // Score breakdown: 
-        // 8.0 = 4x Weakness + Tera Adaptability (2.0)
-        // 6.0 = 4x Weakness + Standard STAB (1.5)
-        // 4.0 = 2x Weakness + Tera Adaptability (2.0)
-        // 3.0 = 2x Weakness + Standard STAB (1.5)
-
-        if (maxDamageScore >= 6) message = "NUCLEAR DAMAGE (OHKO)";
-        else if (maxDamageScore >= 4) message = "Massive Damage";
-        else if (maxDamageScore >= 3) message = "Super Effective";
-        else if (maxDamageScore >= 1.5) message = "Solid Hit";
-        else if (maxDamageScore < 1) message = "Not Effective";
-
-        return {
-          memberId: member.id,
-          offensiveScore: maxDamageScore, // Now includes STAB/Tera
-          defensiveScore: maxIncomingDamage,
-          bestMoveType,
-          speedDiff,
-          speedTier,
-          message,
-          mySpeed: realMemberSpeed,
-          enemySpeed: realEnemySpeed,
-          catchScore: catchInfo.score,
-          catchMoves: catchInfo.moves,
-        };
-      })
-      .filter(Boolean) as (MatchupResult & {
-        catchScore: number;
-        catchMoves: string[];
-      })[];
-
-    return {
-      matchups: results,
-      bestCounterId: bestOffId,
-      bestCatcherId: highestCatchScore > 10 ? bestCatchId : null,
-    };
-  }, [enemyData, team, enemyLevel, enemyTera]);
-
-  const { matchups, bestCounterId, bestCatcherId } = analysisData;
-
-  // Team Weakness Matrix Calc
-  const getTeamWeaknesses = () => {
-    const weaknesses: { type: string; members: TeamMember[] }[] = [];
-
-    TYPE_NAMES.forEach((type) => {
-      const vulnerableMembers: TeamMember[] = [];
-      team.forEach((member) => {
-        if (!member.data) return;
-        const defTypes = member.data.types.map((t) => t.type.name);
-        let mult = getMultiplier(type, defTypes[0]);
-        if (defTypes[1]) mult *= getMultiplier(type, defTypes[1]);
-
-        if (mult >= 2) vulnerableMembers.push(member);
-      });
-      if (vulnerableMembers.length >= 2) {
-        weaknesses.push({ type, members: vulnerableMembers });
-      }
-    });
-    return weaknesses.sort((a, b) => b.members.length - a.members.length);
-  };
-
-  const teamWeaknesses = getTeamWeaknesses();
+  // Use the extracted hook for combat logic
+  const { matchups, bestCounterId, bestCatcherId } = useCombatAnalysis(
+    team,
+    enemyData,
+    enemyLevel,
+    enemyTera
+  );
 
   // Helper for catch button
   const isCaught = enemyData ? caughtPokemon.includes(enemyData.name) : false;
-
-  // Replacement suggestions cache (stored by target type)
-  const [replacementCache, setReplacementCache] = useState<
-    Record<string, { name: string; types: string[] } | null>
-  >({});
-
-  // Find a replacement from Pokedex that counters the given type
-  const getReplacementSuggestion = (
-    targetType: string
-  ): { name: string; types: string[] } | null => {
-    if (!targetType) return null;
-
-    // Check cache first
-    if (replacementCache[targetType] !== undefined) {
-      return replacementCache[targetType];
-    }
-
-    // Find first caught Pokemon that counters this type and isn't already in team
-    const teamNames = team.filter((m) => m.data).map((m) => m.data!.name);
-
-    // Types that are super effective against targetType
-    const counterTypes: Record<string, string[]> = {
-      water: ["electric", "grass"],
-      fire: ["water", "rock", "ground"],
-      grass: ["fire", "ice", "poison", "flying", "bug"],
-      electric: ["ground"],
-      ground: ["water", "grass", "ice"],
-      rock: ["water", "grass", "fighting", "ground", "steel"],
-      flying: ["electric", "ice", "rock"],
-      poison: ["ground", "psychic"],
-      psychic: ["bug", "ghost", "dark"],
-      fighting: ["flying", "psychic", "fairy"],
-      bug: ["fire", "flying", "rock"],
-      ghost: ["ghost", "dark"],
-      dark: ["fighting", "bug", "fairy"],
-      dragon: ["ice", "dragon", "fairy"],
-      steel: ["fire", "fighting", "ground"],
-      fairy: ["poison", "steel"],
-      ice: ["fire", "fighting", "rock", "steel"],
-      normal: ["fighting"],
-    };
-
-    // The boss has targetType - we need Pokemon that can hit it super effectively
-    // OR resist its attacks
-    const effectiveTypes = counterTypes[targetType] || [];
-
-    // Look for a caught Pokemon with one of these types that isn't in the team
-    for (const pName of caughtPokemon) {
-      if (teamNames.includes(pName)) continue;
-
-      // We don't have type data here - just return the name and we'll display it
-      // The actual UI will need to fetch this or we use a simple heuristic
-      // For now, return the first available - the Top Counters section already calculated this
-    }
-
-    return null; // Will be populated by the SuggestedCounters component data
-  };
 
   // Use suggestedCounters for replacement suggestions (already calculated)
   const findReplacementFromSuggested = (
@@ -815,19 +221,16 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
         <div className="flex justify-end mt-2">
           <button
             onClick={() => setIsRaidMode(!isRaidMode)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 border-2 shadow-sm ${isRaidMode
-              ? "bg-purple-600 text-white border-purple-800"
-              : "bg-white dark:bg-dark-card text-gray-500 dark:text-dark-text-secondary border-gray-200 dark:border-dark-border hover:border-gray-400 dark:hover:border-gray-400"
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 border-2 shadow-sm ${
+              isRaidMode
+                ? "bg-purple-600 text-white border-purple-800"
+                : "bg-white dark:bg-dark-card text-gray-500 dark:text-dark-text-secondary border-gray-200 dark:border-dark-border hover:border-gray-400 dark:hover:border-gray-400"
+            }`}
           >
             <Swords size={16} />
             Tera Raid Mode
           </button>
         </div>
-
-        {/* Removed: "Auto Build" button - user keeps team locked, replacement suggestions are now inline on cards */}
-
-
       </div>
 
       {error && (
@@ -865,10 +268,11 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                 {/* Catch Button */}
                 <button
                   onClick={() => onToggleCaught(enemyData.name)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${isCaught
-                    ? "bg-green-600 hover:bg-green-500 text-white border border-green-400"
-                    : "bg-white hover:bg-gray-200 text-red-600 border border-red-500"
-                    }`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase shadow-lg transition-all transform active:scale-95 ${
+                    isCaught
+                      ? "bg-green-600 hover:bg-green-500 text-white border border-green-400"
+                      : "bg-white hover:bg-gray-200 text-red-600 border border-red-500"
+                  }`}
                   title={isCaught ? "Remove from Pokedex" : "Add to Pokedex"}
                 >
                   {isCaught ? (
@@ -923,338 +327,26 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
               const member = team.find((m) => m.id === matchup.memberId);
               if (!member?.data) return null;
 
-              const isBestCounter = matchup.memberId === bestCounterId;
-              const isBestCatcher = matchup.memberId === bestCatcherId;
-
-              let borderColor = "border-gray-600";
-              let bgGlow = "";
-              let shadow = "";
-
-              // Check for Raid Roles
-              const hasSetup = member.data.moves.some(m => RAID_SETUP_MOVES.includes(m.name));
-              const hasSupport = member.data.moves.some(m => RAID_SUPPORT_MOVES.includes(m.name));
-
-              if (isBestCounter) {
-                borderColor = "border-amber-500 shadow-xl shadow-amber-500/10";
-                bgGlow = "bg-amber-50/50";
-                shadow = "scale-[1.02] z-10";
-              } else if (isBestCatcher) {
-                borderColor = "border-blue-500 shadow-xl shadow-blue-500/10";
-                bgGlow = "bg-blue-50/50";
-                shadow = "scale-[1.02] z-10";
-              } else if (matchup.offensiveScore >= 4) {
-                borderColor = "border-green-500";
-                bgGlow = "bg-green-50/30";
-              } else if (matchup.offensiveScore >= 2) {
-                borderColor = "border-green-400";
-                bgGlow = "bg-green-50/20";
-              } else if (matchup.offensiveScore < 1) {
-                borderColor = "border-red-500";
-                bgGlow = "bg-red-50/30";
-              }
-
               return (
-                <div
+                <MatchupCard
                   key={idx}
-                  className={`border-4 ${borderColor} ${bgGlow} ${shadow} bg-white dark:bg-dark-card p-2.5 rounded-xl flex flex-col gap-1 relative overflow-hidden transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 block`}
-                >
-                  {isBestCounter && (
-                    <div className="absolute right-0 top-0 bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded-bl-lg uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black">
-                      <Crown size={10} /> BEST COUNTER
-                    </div>
+                  matchup={matchup}
+                  member={member}
+                  isBestCounter={matchup.memberId === bestCounterId}
+                  isBestCatcher={matchup.memberId === bestCatcherId}
+                  isRaidMode={isRaidMode}
+                  replacementSuggestion={findReplacementFromSuggested(
+                    member.data.name
                   )}
-                  {isBestCatcher && (
-                    <div
-                      className={`absolute right-0 ${isBestCounter ? "top-6" : "top-0"
-                        } bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg uppercase flex items-center gap-1 shadow-lg z-10 tracking-widest border-b-2 border-l-2 border-black`}
-                    >
-                      <CircleDot size={12} /> BEST CATCHER
-                    </div>
-                  )}
-
-                  {matchup.defensiveScore >= 2 && (
-                    <div
-                      className="absolute right-2 top-6 animate-pulse opacity-50"
-                      title="Opponent has super effective moves!"
-                    >
-                      <Skull
-                        size={20}
-                        className={
-                          matchup.defensiveScore >= 4
-                            ? "text-red-500"
-                            : "text-orange-500"
-                        }
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-start pr-0 mt-1">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-white dark:bg-dark-card rounded-full border-2 border-black dark:border-dark-border shadow-sm flex items-center justify-center overflow-hidden transition-colors duration-200">
-                        <img
-                          src={member.data.sprites.front_default}
-                          alt={member.data.name}
-                          className="w-10 h-10 object-contain"
-                        />
-                      </div>
-                      <div>
-                        <span className="font-black capitalize text-base block text-black dark:text-dark-text leading-tight">
-                          {member.data.name}
-                        </span>
-                        <span className="text-[10px] text-black/40 dark:text-dark-text-secondary font-black uppercase tracking-widest">
-                          LV {member.level}
-                        </span>
-                      </div>
-                    </div>
-
-                    {!isRaidMode && (
-                      <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-1 text-[9px] bg-gray-50 dark:bg-dark-border border-2 border-black/5 dark:border-dark-border px-2 py-0.5 rounded-full mb-0.5 shadow-inner transition-colors duration-200">
-                          {matchup.speedTier === "faster" && (
-                            <ArrowUpCircle size={14} className="text-green-600" />
-                          )}
-                          {matchup.speedTier === "slower" && (
-                            <ArrowDownCircle size={14} className="text-red-600" />
-                          )}
-                          {matchup.speedTier === "tie" && (
-                            <MinusCircle size={14} className="text-yellow-600" />
-                          )}
-                          <span
-                            className={`font-black uppercase tracking-widest ${matchup.speedTier === "faster"
-                              ? "text-green-600"
-                              : matchup.speedTier === "slower"
-                                ? "text-red-600"
-                                : "text-yellow-600"
-                              }`}
-                          >
-                            {matchup.speedTier === "faster"
-                              ? "Faster"
-                              : matchup.speedTier === "slower"
-                                ? "Slower"
-                                : "Tie"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Raid Badges */}
-                  {isRaidMode && (
-                    <div className="flex gap-1 mt-1 flex-wrap">
-                      {hasSetup && (
-                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[9px] font-black uppercase rounded border border-purple-200 flex items-center gap-1">
-                          ⚡ SELF SETUP
-                        </span>
-                      )}
-                      {hasSupport && (
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-black uppercase rounded border border-blue-200 flex items-center gap-1">
-                          🛡️ TEAM SUPPORT
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-black/40 dark:text-dark-text-secondary text-[9px] font-black uppercase tracking-widest">
-                      Best Type:
-                    </span>
-                    <span
-                      className="px-2 py-0.5 rounded text-[10px] font-black text-white uppercase shadow-sm"
-                      style={{
-                        backgroundColor:
-                          TYPE_COLORS[matchup.bestMoveType] || "#666",
-                      }}
-                    >
-                      {matchup.bestMoveType}
-                    </span>
-                  </div>
-
-                  <div
-                    className={`mt-0.5 font-black text-[10px] uppercase tracking-widest ${matchup.offensiveScore >= 2
-                      ? "text-green-600"
-                      : matchup.offensiveScore < 1
-                        ? "text-red-600"
-                        : "text-black/30"
-                      }`}
-                  >
-                    {matchup.message}
-                  </div>
-
-                  {/* Move Recommender */}
-                  {matchup.offensiveScore >= 2 && (
-                    <MoveRecommender
-                      moves={member.data.moves}
-                      currentLevel={member.level}
-                      targetType={matchup.bestMoveType}
-                    />
-                  )}
-
-                  {/* Catch Recommendations */}
-                  {isBestCatcher && matchup.catchMoves.length > 0 && (
-                    <div className="mt-3 bg-blue-50 border-2 border-blue-100 p-3 rounded-xl shadow-inner">
-                      <div className="text-[10px] text-blue-900 uppercase font-black mb-2 flex items-center gap-1.5 tracking-widest">
-                        <CircleDot size={12} /> CATCH STRATEGY
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {matchup.catchMoves.map((m) => (
-                          <span
-                            key={m}
-                            className="text-[10px] bg-white border border-blue-200 px-2 py-1 rounded-lg text-blue-700 capitalize font-bold shadow-sm"
-                          >
-                            {m.replace(/-/g, " ")}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {matchup.defensiveScore >= 1 && (
-                    <div
-                      className={`mt-4 pt-3 border-t border-black/5 text-[10px] flex items-center gap-2 font-black tracking-widest ${matchup.defensiveScore >= 2
-                        ? "text-red-600"
-                        : "text-black/30"
-                        }`}
-                    >
-                      {matchup.defensiveScore >= 2 ? (
-                        <ShieldAlert size={16} />
-                      ) : (
-                        <div className="w-4" />
-                      )}
-                      <span className="uppercase tracking-tighter">
-                        {matchup.defensiveScore >= 4
-                          ? "Takes 4x Damage!"
-                          : matchup.defensiveScore >= 2
-                            ? (isRaidMode ? "⛔ UNSAFE FOR RAID" : "Takes Super Effective Dmg!")
-                            : "Takes Neutral Damage."}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Replacement Suggestion - shows when weak to boss */}
-                  {matchup.defensiveScore >= 2 &&
-                    (() => {
-                      const replacement = findReplacementFromSuggested(
-                        member.data.name
-                      );
-                      if (!replacement) return null;
-
-                      return (
-                        <div className="mt-3 bg-amber-50 border-2 border-amber-200 p-3 rounded-xl shadow-inner animate-in slide-in-from-bottom-2">
-                          <div className="text-[10px] text-amber-900 uppercase font-black mb-2 flex items-center gap-1.5 tracking-widest">
-                            <Zap size={12} className="text-amber-600" />{" "}
-                            Consider Instead
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="bg-white p-1 rounded-full border-2 border-amber-200 shadow-sm">
-                              <img
-                                src={
-                                  replacement.sprites.other?.[
-                                    "official-artwork"
-                                  ].front_default ||
-                                  replacement.sprites.front_default
-                                }
-                                alt={replacement.name}
-                                className="w-10 h-10 object-contain"
-                              />
-                            </div>
-                            <div className="flex-grow">
-                              <div className="font-black text-amber-900 capitalize text-sm">
-                                {replacement.name.replace(/-/g, " ")}
-                              </div>
-                              <div className="flex gap-1 mt-1">
-                                {replacement.types.map((t) => (
-                                  <span
-                                    key={t.type.name}
-                                    className="px-1.5 py-0.5 rounded text-[8px] font-black text-white uppercase"
-                                    style={{
-                                      backgroundColor:
-                                        TYPE_COLORS[t.type.name] || "#555",
-                                    }}
-                                  >
-                                    {t.type.name.slice(0, 3)}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            {/* Reason Badge - More prominent */}
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="px-2 py-1 bg-green-100 border border-green-300 text-green-700 rounded-lg text-[10px] font-black uppercase tracking-tight">
-                                {(replacement as any).reason ||
-                                  "Strong Counter"}
-                              </span>
-                              <span className="text-[8px] text-amber-500 font-bold">
-                                vs {enemyTera || enemyData?.types[0]?.type.name}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                </div>
+                  enemyTera={enemyTera}
+                  enemyDefaultType={enemyData.types[0]?.type.name}
+                />
               );
             })}
           </div>
 
           {/* Team Weakness Matrix */}
-          {teamWeaknesses.length > 0 && (
-            <div className="bg-white dark:bg-dark-card border-4 border-black dark:border-dark-border rounded-3xl p-6 shadow-2xl mt-4 transition-colors duration-200">
-              <div className="mb-4 border-b-2 border-black/5 pb-2">
-                <h3 className="text-black dark:text-dark-text font-black uppercase text-lg flex items-center gap-2 tracking-widest">
-                  <ShieldAlert size={24} className="text-scarlet" />
-                  Team Defense Gaps
-                </h3>
-                <p className="text-xs text-black/50 font-bold mt-1 uppercase tracking-wider pl-8">
-                  Shared weaknesses across your team that opponents can exploit.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {teamWeaknesses.map((w) => (
-                  <div
-                    key={w.type}
-                    className="flex flex-col bg-gray-50 dark:bg-dark-card rounded-xl border-2 border-black dark:border-dark-border overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md"
-                  >
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-dark-card border-b-2 border-black/5 dark:border-dark-border transition-colors duration-200">
-                      <span
-                        className="px-2 py-0.5 text-[10px] font-black text-white uppercase rounded shadow-sm"
-                        style={{
-                          backgroundColor: TYPE_COLORS[w.type] || "#555",
-                        }}
-                      >
-                        {w.type}
-                      </span>
-                      <span className="text-[10px] text-red-600 font-black uppercase tracking-wider">
-                        {w.members.length} Vulnerable
-                      </span>
-                    </div>
-
-                    {/* Member Sprites */}
-                    <div className="flex items-center gap-2 p-3 bg-gray-50/50 dark:bg-dark-border/50 flex-wrap transition-colors duration-200">
-                      {w.members.map((m) => (
-                        <div
-                          key={m.id}
-                          className="w-8 h-8 bg-white dark:bg-dark-card rounded-full border border-black/10 dark:border-dark-border flex items-center justify-center shadow-sm relative group cursor-help transition-colors duration-200"
-                          title={`${m.data?.name} is weak to ${w.type}`}
-                        >
-                          <img
-                            src={m.data?.sprites.front_default}
-                            alt={m.data?.name}
-                            className="w-6 h-6 object-contain"
-                          />
-                          {/* Hover Tooltip */}
-                          <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-2 py-1 rounded font-bold uppercase whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                            {m.data?.name}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <TeamWeaknessMatrix team={team} />
 
           {/* Suggested Counters Row - now primarily provides data for inline replacement suggestions */}
           {caughtPokemon.length > 0 && enemyData && (
@@ -1271,7 +363,6 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
                   ?.base_stat || 0,
                 enemyLevel
               )}
-
               team={team}
             />
           )}
