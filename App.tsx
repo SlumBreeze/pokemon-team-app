@@ -128,60 +128,38 @@ const App: React.FC = () => {
       let mergedShiny: string[] = [];
       let currentStorageType: "firebase" | "local" | "offline" = "offline";
 
+      // Always prefer Server data if available (even if empty)
+      if (serverData) {
+        console.log("Using Server data as source of truth.");
+        mergedProfiles = serverData.profiles || {};
+        mergedActiveId = serverData.activeProfileId || "";
+        mergedCaught = serverData.globalCaughtPokemon || [];
+        mergedShiny = serverData.globalShinyPokemon || [];
+        currentStorageType = serverData.storageType || "firebase";
 
-      const serverLastUpdated = serverData?.lastUpdated || 0;
-      const localLastUpdated = localData?.lastUpdated || 0;
-
-      // Merge Logic with Prompt
-      if (
-        serverData &&
-        serverData.profiles &&
-        Object.keys(serverData.profiles).length > 0
-      ) {
-        // Server has data. Check if Local is newer.
-        if (localData && localLastUpdated > serverLastUpdated) {
-          // Local is newer! Ask user.
-          const userChoice = confirm("Local data is newer than Cloud data. Overwrite Cloud with Local?");
-          if (userChoice) {
-            // User chose Local
-            console.log("User chose Local data over Cloud.");
-            mergedProfiles = localData.profiles;
-            mergedActiveId = localData.activeProfileId;
-            mergedCaught = localData.globalCaughtPokemon || [];
-            mergedShiny = localData.globalShinyPokemon || [];
-            currentStorageType = serverData.storageType || "local";
-            // Will save to server on next effect run
-          } else {
-            // User chose Cloud
-            console.log("User chose Cloud data.");
-            mergedProfiles = serverData.profiles;
-            mergedActiveId = serverData.activeProfileId;
-            mergedCaught = serverData.globalCaughtPokemon || serverData.globalCaughtPokemon || [];
-            mergedShiny = serverData.globalShinyPokemon || [];
-            currentStorageType = serverData.storageType || "local";
-          }
-        } else {
-          // Server is newer or equal, use Server
-          mergedProfiles = serverData.profiles;
-          mergedActiveId = serverData.activeProfileId;
-          mergedCaught = serverData.globalCaughtPokemon || [];
-          mergedShiny = serverData.globalShinyPokemon || [];
-          currentStorageType = serverData.storageType || "local";
+        // If server returned NO profiles, create a default one immediately
+        if (Object.keys(mergedProfiles).length === 0) {
+          console.log("Server data empty, creating default profile.");
+          const defaultProfile = createDefaultProfile();
+          mergedProfiles = { [defaultProfile.id]: defaultProfile };
+          mergedActiveId = defaultProfile.id;
+        }
+        // If server has profiles but no active ID, pick the first one
+        else if (!mergedActiveId) {
+           mergedActiveId = Object.keys(mergedProfiles)[0];
         }
       } else if (
         localData &&
         localData.profiles &&
         Object.keys(localData.profiles).length > 0
       ) {
-        // Server empty or offline, but LocalStorage has data
+        // Server offline, but LocalStorage has data
         console.log("Using LocalStorage backup");
         mergedProfiles = localData.profiles;
         mergedActiveId = localData.activeProfileId;
         mergedCaught = localData.globalCaughtPokemon || [];
         mergedShiny = localData.globalShinyPokemon || [];
-        currentStorageType = serverData
-          ? serverData.storageType || "local"
-          : "offline";
+        currentStorageType = "offline";
       } else {
         // Nothing anywhere, create default
         const defaultProfile = createDefaultProfile();

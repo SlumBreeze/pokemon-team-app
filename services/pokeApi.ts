@@ -8,8 +8,30 @@ let cachedItemNames: string[] = [];
 const moveTypeCache: Record<string, string> = {};
 const moveDetailsCache: Record<string, MoveDetails> = {};
 const itemDescCache: Record<string, string> = {};
-const pokemonCache: Record<string, PokemonData> = {}; // Cache full pokemon data
+let pokemonCache: Record<string, PokemonData> = {}; // Cache full pokemon data
 let cachedPaldeaDex: { name: string; id: number }[] = [];
+
+// Load cache from LocalStorage on init
+try {
+  const stored = localStorage.getItem("pokeapi-cache-v1");
+  if (stored) {
+    pokemonCache = JSON.parse(stored);
+  }
+} catch (e) {
+  console.warn("Failed to load pokemon cache from localStorage", e);
+}
+
+let saveTimeout: any = null;
+const saveCache = () => {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    try {
+      localStorage.setItem("pokeapi-cache-v1", JSON.stringify(pokemonCache));
+    } catch (e) {
+      console.warn("Failed to save pokemon cache (likely full):", e);
+    }
+  }, 2000);
+};
 
 export const getPokemonNames = async (): Promise<string[]> => {
   if (cachedPokemonNames.length > 0) return cachedPokemonNames;
@@ -180,6 +202,7 @@ export const fetchPokemon = async (name: string): Promise<PokemonData> => {
   } as PokemonData;
 
   pokemonCache[cleanName] = result;
+  saveCache();
   return result;
 };
 
